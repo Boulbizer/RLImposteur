@@ -201,3 +201,11 @@ button:hover {
   border-radius: 6px;
   font-weight: 500;
 }
+
+#pseudo-label {
+  font-size: 13px;
+  font-style: italic;
+  color: #888;
+  margin-top: -6px;
+  text-align: center;
+}
