@@ -1,17 +1,14 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Imposteur Rocket League</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
 <body>
   <div class="container">
     <h1 class="title">🎮 Imposteur Rocket League 🚗</h1>
     <p id="room-name" class="room-id"></p>
 
-    <div id="join-section">
+    <div id="create-room-section">
+      <button id="create-room-btn">🎲 Créer une salle aléatoire</button>
+      <p class="small-note">Ou partage un lien comme <code>?salle=match-potes</code></p>
+    </div>
+
+    <div id="join-section" style="display: none;">
       <input type="text" id="username" placeholder="Ton pseudo en jeu" />
       <button id="join-btn">Rejoindre le match</button>
     </div>
@@ -35,4 +32,3 @@
 
   <script src="script.js"></script>
 </body>
-</html>
