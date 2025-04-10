@@ -43,11 +43,12 @@
     </div>
   </div>
 
-  <!-- ✅ Firebase (version compat) -->
+  <!-- ✅ Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-auth-compat.js"></script>
 
-  <!-- ✅ Ta configuration Firebase -->
+  <!-- ✅ Configuration Firebase -->
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyBmsEOwMwVMVLjWN9FXW5KQI_2JfrdqdEc",
@@ -61,9 +62,20 @@
 
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
+
+    // ✅ Connexion anonyme automatique
+    firebase.auth().onAuthStateChanged((user) => {
+      if (!user) {
+        firebase.auth().signInAnonymously().catch((error) => {
+          console.error("Erreur auth anonyme :", error);
+        });
+      } else {
+        console.log("Utilisateur connecté :", user.uid);
+      }
+    });
   </script>
 
-  <!-- ✅ Ton script -->
+  <!-- ✅ Ton script principal -->
   <script src="script.js"></script>
 </body>
 </html>
