@@ -15,6 +15,7 @@ const copyBtn = document.getElementById('copy-room-btn');
 const copyFeedback = document.getElementById('copy-feedback');
 const scoreBoard = document.getElementById('score-board');
 const scoreSection = document.getElementById('score-section');
+const voteSection = document.getElementById('vote-section');
 
 let currentPlayer = '';
 let roomKey = null;
@@ -89,151 +90,158 @@ function getRandomChallenges(count = 3) {
   const shuffled = impostorChallenges.sort(() => 0.5 - Math.random());
   return shuffled.slice(0, count);
 }
-
 joinBtn.addEventListener('click', async () => {
-  const name = usernameInput.value.trim();
-  if (!name) return;
-
-  const user = firebase.auth().currentUser;
-  if (!user) return;
-
-  currentPlayer = name;
-  currentUid = user.uid;
-
-  const ref = firebase.database().ref(`rooms/${roomKey}/players/${currentUid}`);
-  await ref.set({ name });
-
-  localStorage.setItem('rl_pseudo', name);
-  localStorage.setItem('rl_room', roomKey);
-
-  joinSection.style.display = 'none';
-  lobbySection.style.display = 'block';
-  listenToPlayers();
-});
-
-startBtn.addEventListener('click', () => {
-  if (players.length < 4) return;
-
-  const impostor = players[Math.floor(Math.random() * players.length)];
-  const challenges = getRandomChallenges(3);
-
-  firebase.database().ref(`rooms/${roomKey}/game`).set({
-    impostor,
-    challenges,
-    started: true
+    const name = usernameInput.value.trim();
+    if (!name) return;
+  
+    const user = firebase.auth().currentUser;
+    if (!user) return;
+  
+    currentPlayer = name;
+    currentUid = user.uid;
+  
+    const ref = firebase.database().ref(`rooms/${roomKey}/players/${currentUid}`);
+    await ref.set({ name });
+  
+    localStorage.setItem('rl_pseudo', name);
+    localStorage.setItem('rl_room', roomKey);
+  
+    joinSection.style.display = 'none';
+    lobbySection.style.display = 'block';
+    listenToPlayers();
   });
-
-  firebase.database().ref(`rooms/${roomKey}/votes`).remove();
-});
-
-function showRole(impostor, challenges) {
-  lobbySection.style.display = 'none';
-  roleSection.style.display = 'block';
-
-  const badge = document.createElement('div');
-  badge.id = 'role-badge';
-
-  if (currentPlayer === impostor) {
-    badge.classList.add('impostor');
-    badge.textContent = '🚨 IMPOSTEUR';
-
-    roleDisplay.innerHTML = '';
-    roleDisplay.appendChild(badge);
-    roleDisplay.innerHTML += `<div style="margin-top:10px; text-align:left;">
-      <strong>🎯 Tes défis :</strong><br>${challenges.map(c => `• ${c}`).join('<br>')}
-    </div>`;
-  } else {
-    badge.classList.add('citizen');
-    badge.textContent = '🟢 COÉQUIPIER';
-
-    roleDisplay.innerHTML = '';
-    roleDisplay.appendChild(badge);
-    roleDisplay.innerHTML += `<p>Gagne la partie et démasque l’imposteur.</p>`;
-  }
-
-  roleDisplay.classList.remove('show', 'animate');
-  void roleDisplay.offsetWidth;
-  roleDisplay.classList.add('show', 'animate');
-
-  setTimeout(() => {
-    startVoting(impostor);
-  }, 3000);
-}
-
-function startVoting(impostor) {
-  const voteSection = document.getElementById('vote-section');
-  const voteList = document.getElementById('vote-list');
-  const voteStatus = document.getElementById('vote-status');
-  const voteResult = document.getElementById('vote-result');
-
-  voteSection.style.display = 'block';
-  voteList.innerHTML = '';
-  voteStatus.textContent = 'Clique sur un joueur pour voter.';
-
-  players.forEach(name => {
-    const li = document.createElement('li');
-    li.textContent = name;
-    li.addEventListener('click', async () => {
-      if (li.classList.contains('voted')) return;
-      li.classList.add('voted');
-      voteStatus.textContent = "✅ Vote enregistré. En attente des autres joueurs...";
-      const user = firebase.auth().currentUser;
-      if (!user) return;
-      await firebase.database().ref(`rooms/${roomKey}/votes/${user.uid}`).set(name);
+  
+  startBtn.addEventListener('click', () => {
+    if (players.length < 4) return;
+  
+    const impostor = players[Math.floor(Math.random() * players.length)];
+    const challenges = getRandomChallenges(3);
+  
+    firebase.database().ref(`rooms/${roomKey}/game`).set({
+      impostor,
+      challenges,
+      started: true
     });
-    voteList.appendChild(li);
+  
+    firebase.database().ref(`rooms/${roomKey}/votes`).remove();
   });
-
-  const ref = firebase.database().ref(`rooms/${roomKey}/votes`);
-  ref.on('value', async snapshot => {
-    const votes = snapshot.val() || {};
-    const totalVotes = Object.keys(votes).length;
-    voteStatus.textContent = `🗳️ ${totalVotes}/${players.length} votes enregistrés`;
-
-    if (totalVotes >= players.length) {
-      ref.off();
-
-      const tally = {};
-      Object.values(votes).forEach(name => {
-        tally[name] = (tally[name] || 0) + 1;
+  
+  function showRole(impostor, challenges) {
+    lobbySection.style.display = 'none';
+    roleSection.style.display = 'block';
+  
+    const badge = document.createElement('div');
+    badge.id = 'role-badge';
+  
+    if (currentPlayer === impostor) {
+      badge.classList.add('impostor');
+      badge.textContent = '🚨 IMPOSTEUR';
+      roleDisplay.innerHTML = '';
+      roleDisplay.appendChild(badge);
+      roleDisplay.innerHTML += `<div style="margin-top:10px; text-align:left;">
+        <strong>🎯 Tes défis :</strong><br>${challenges.map(c => `• ${c}`).join('<br>')}
+      </div>`;
+    } else {
+      badge.classList.add('citizen');
+      badge.textContent = '🟢 COÉQUIPIER';
+      roleDisplay.innerHTML = '';
+      roleDisplay.appendChild(badge);
+      roleDisplay.innerHTML += `<p>Gagne la partie et démasque l’imposteur.</p>`;
+    }
+  
+    roleDisplay.classList.remove('show', 'animate');
+    void roleDisplay.offsetWidth;
+    roleDisplay.classList.add('show', 'animate');
+  
+    setTimeout(() => {
+      startVoting(impostor);
+    }, 3000);
+  }
+  
+  function startVoting(impostor) {
+    const voteList = document.getElementById('vote-list');
+    const voteStatus = document.getElementById('vote-status');
+    const voteResult = document.getElementById('vote-result');
+  
+    voteSection.style.display = 'block';
+    voteList.innerHTML = '';
+    voteStatus.textContent = 'Clique sur un joueur pour voter.';
+  
+    players.forEach(name => {
+      if (name === currentPlayer) return; // ❌ Interdiction de voter pour soi-même
+  
+      const li = document.createElement('li');
+      li.textContent = name;
+      li.addEventListener('click', async () => {
+        if (li.classList.contains('voted')) return;
+        li.classList.add('voted');
+        voteStatus.textContent = "✅ Vote enregistré. En attente des autres joueurs...";
+  
+        const user = firebase.auth().currentUser;
+        if (!user) return;
+  
+        await firebase.database().ref(`rooms/${roomKey}/votes/${user.uid}`).set(name);
       });
-
-      let mostVoted = '';
-      let maxVotes = 0;
-      for (let name in tally) {
-        if (tally[name] > maxVotes) {
-          mostVoted = name;
-          maxVotes = tally[name];
+      voteList.appendChild(li);
+    });
+  
+    const ref = firebase.database().ref(`rooms/${roomKey}/votes`);
+    ref.on('value', async snapshot => {
+      const votes = snapshot.val() || {};
+      const totalVotes = Object.keys(votes).length;
+      voteStatus.textContent = `🗳️ ${totalVotes}/${players.length} votes enregistrés`;
+  
+      if (totalVotes >= players.length) {
+        ref.off();
+  
+        const tally = {};
+        Object.values(votes).forEach(name => {
+          tally[name] = (tally[name] || 0) + 1;
+        });
+  
+        let mostVoted = '';
+        let maxVotes = 0;
+        for (let name in tally) {
+          if (tally[name] > maxVotes) {
+            mostVoted = name;
+            maxVotes = tally[name];
+          }
         }
-      }
+  
+        const gameSnap = await firebase.database().ref(`rooms/${roomKey}/game`).get();
+        const realImpostor = gameSnap.val().impostor;
+  
+        const scoresRef = firebase.database().ref(`rooms/${roomKey}/scores`);
+        const scoreSnap = await scoresRef.get();
+        const currentScores = scoreSnap.val() || {};
 
-      const gameSnap = await firebase.database().ref(`rooms/${roomKey}/game`).get();
-      const realImpostor = gameSnap.val().impostor;
-
-      // Attribution des points
-      const scoresRef = firebase.database().ref(`rooms/${roomKey}/scores`);
-      const scoreSnap = await scoresRef.get();
-      const currentScores = scoreSnap.val() || {};
-
+              // Attribution des scores
       for (let uid in votes) {
         const voteName = votes[uid];
-        const isCorrect = voteName === realImpostor;
+        const playerSnap = await firebase.database().ref(`rooms/${roomKey}/players/${uid}`).get();
+        const name = playerSnap.exists() ? playerSnap.val().name : "Joueur inconnu";
         const prevScore = currentScores[uid]?.points || 0;
-        const name = currentScores[uid]?.name || players.find(p => p !== undefined);
+        const isCorrect = voteName === realImpostor;
 
         await scoresRef.child(uid).set({
-          name: name,
+          name,
           points: prevScore + (isCorrect ? 1 : 0)
         });
       }
 
-      // Impostor bonus
-      const impostorUid = Object.entries(currentScores).find(([uid, val]) => val.name === realImpostor)?.[0];
-      if (impostorUid && !Object.values(votes).includes(realImpostor)) {
-        const prev = currentScores[impostorUid]?.points || 0;
-        await scoresRef.child(impostorUid).update({
-          points: prev + 3
-        });
+      // Bonus pour l’imposteur s’il n’a pas été désigné
+      const impostorUidEntry = Object.entries(currentScores).find(
+        ([uid, data]) => data.name === realImpostor
+      );
+      if (impostorUidEntry) {
+        const [impostorUid, impostorData] = impostorUidEntry;
+        const wasCaught = Object.values(votes).includes(realImpostor);
+        if (!wasCaught) {
+          const prev = impostorData.points || 0;
+          await scoresRef.child(impostorUid).update({
+            points: prev + 3
+          });
+        }
       }
 
       voteResult.innerHTML = `
