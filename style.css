@@ -186,3 +186,18 @@ button:hover {
   color: #fff;
   cursor: default;
 }
+
+#score-board {
+  list-style: none;
+  padding: 0;
+  margin-top: 10px;
+  text-align: left;
+}
+
+#score-board li {
+  padding: 6px 10px;
+  background-color: #2b2b2b;
+  margin-bottom: 5px;
+  border-radius: 6px;
+  font-weight: 500;
+}
