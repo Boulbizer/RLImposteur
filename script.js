@@ -10,21 +10,30 @@ const replayBtn = document.getElementById('replay-btn');
 const replaySection = document.getElementById('replay-section');
 const replayInfo = document.getElementById('replay-info');
 const roomNameDisplay = document.getElementById('room-name');
+const createRoomSection = document.getElementById('create-room-section');
+const createRoomBtn = document.getElementById('create-room-btn');
 
 let players = [];
 let currentPlayer = '';
 let gameStarted = false;
 
-// 🔐 Obtenir la clé de salle à partir de l'URL
+// 🔐 Salle à partir de l'URL
 function getRoomKey() {
   const params = new URLSearchParams(window.location.search);
-  return params.get('salle') || 'default-room';
+  return params.get('salle');
 }
 
 const roomKey = getRoomKey();
-roomNameDisplay.textContent = `Salle : ${roomKey}`;
+if (roomKey) {
+  roomNameDisplay.textContent = `Salle : ${roomKey}`;
+  createRoomSection.style.display = 'none';
+  joinSection.style.display = 'block';
+} else {
+  roomNameDisplay.textContent = `Aucune salle sélectionnée`;
+  joinSection.style.display = 'none';
+}
 
-// 🔒 Accès localStorage spécifique à une salle
+// 📦 Stockage local par salle
 function saveRoomData(key, value) {
   localStorage.setItem(`${roomKey}_${key}`, JSON.stringify(value));
 }
@@ -38,7 +47,18 @@ function removeRoomData(key) {
   localStorage.removeItem(`${roomKey}_${key}`);
 }
 
-// 🎯 Défis
+// 🎲 Générateur de nom de salle
+function generateRandomRoomName() {
+  const random = Math.random().toString(36).substring(2, 7);
+  return `rocket-${random}`;
+}
+
+createRoomBtn.addEventListener('click', () => {
+  const newRoom = generateRandomRoomName();
+  window.location.href = `?salle=${newRoom}`;
+});
+
+// 🎯 Défis imposteur
 const impostorChallenges = [
   "Tente de rater une balle facile sans te faire remarquer",
   "Fais une retournée inutile en pleine action",
@@ -152,8 +172,10 @@ function resetGame() {
 
 replayBtn.addEventListener('click', resetGame);
 
-// 🔁 Restauration si la salle existe déjà
-const existingPlayers = getRoomData('players');
-if (existingPlayers) {
-  players = existingPlayers;
+// 🔁 Restauration
+if (roomKey) {
+  const existingPlayers = getRoomData('players');
+  if (existingPlayers) {
+    players = existingPlayers;
+  }
 }
