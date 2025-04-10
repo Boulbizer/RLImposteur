@@ -19,7 +19,7 @@ let roomKey = null;
 let players = [];
 let currentUid = '';
 
-// 🔐 Obtenir la salle depuis l’URL
+// Obtenir la salle depuis l’URL
 function getRoomKey() {
   const params = new URLSearchParams(window.location.search);
   return params.get('salle');
@@ -37,7 +37,6 @@ if (!roomKey) {
   document.getElementById('copy-room-section').style.display = 'block';
 }
 
-// 📋 Copier le lien
 copyBtn.addEventListener('click', () => {
   const url = `${window.location.origin}?salle=${roomKey}`;
   navigator.clipboard.writeText(url).then(() => {
@@ -46,13 +45,11 @@ copyBtn.addEventListener('click', () => {
   });
 });
 
-// 🎲 Générer une salle
 createRoomBtn.addEventListener('click', () => {
   const randomRoom = `rocket-${Math.random().toString(36).substring(2, 7)}`;
   window.location.href = `?salle=${randomRoom}`;
 });
 
-// 🔁 Lecture en temps réel des joueurs
 function updatePlayerListUI(players) {
   playerList.innerHTML = '';
   players.forEach(p => {
@@ -74,7 +71,6 @@ function listenToPlayers() {
   });
 }
 
-// 🎯 Défis de l’imposteur
 const impostorChallenges = [
   "Tente de rater une balle facile sans te faire remarquer",
   "Fais une retournée inutile en pleine action",
@@ -93,7 +89,6 @@ function getRandomChallenges(count = 3) {
   return shuffled.slice(0, count);
 }
 
-// 🔘 Rejoindre la salle
 joinBtn.addEventListener('click', async () => {
   const name = usernameInput.value.trim();
   if (!name) return;
@@ -107,7 +102,6 @@ joinBtn.addEventListener('click', async () => {
   const ref = firebase.database().ref(`rooms/${roomKey}/players/${currentUid}`);
   await ref.set({ name });
 
-  // ✅ Sauvegarde locale pour reconnexion automatique
   localStorage.setItem('rl_pseudo', name);
   localStorage.setItem('rl_room', roomKey);
 
@@ -116,7 +110,6 @@ joinBtn.addEventListener('click', async () => {
   listenToPlayers();
 });
 
-// 🎬 Lancer la partie
 startBtn.addEventListener('click', () => {
   if (players.length < 4) return;
 
@@ -128,9 +121,10 @@ startBtn.addEventListener('click', () => {
     challenges,
     started: true
   });
+
+  firebase.database().ref(`rooms/${roomKey}/votes`).remove(); // reset votes
 });
 
-// 🎯 Afficher le rôle du joueur
 function showRole(impostor, challenges) {
   lobbySection.style.display = 'none';
   roleSection.style.display = 'block';
@@ -157,15 +151,78 @@ function showRole(impostor, challenges) {
   }
 
   roleDisplay.classList.remove('show', 'animate');
-void roleDisplay.offsetWidth;
-roleDisplay.classList.add('show', 'animate');
+  void roleDisplay.offsetWidth;
+  roleDisplay.classList.add('show', 'animate');
 
-
-  showReplayOption();
+  setTimeout(() => {
+    startVoting(impostor);
+  }, 3000);
 }
 
+function startVoting(impostor) {
+  const voteSection = document.getElementById('vote-section');
+  const voteList = document.getElementById('vote-list');
+  const voteStatus = document.getElementById('vote-status');
+  const voteResult = document.getElementById('vote-result');
 
-// 🔁 Écoute des infos de partie
+  voteSection.style.display = 'block';
+  voteList.innerHTML = '';
+  voteStatus.textContent = 'Clique sur un joueur pour voter.';
+
+  players.forEach(name => {
+    if (name === currentPlayer) return;
+
+    const li = document.createElement('li');
+    li.textContent = name;
+    li.addEventListener('click', async () => {
+      if (li.classList.contains('voted')) return;
+
+      li.classList.add('voted');
+      voteStatus.textContent = "✅ Vote enregistré. En attente des autres joueurs...";
+
+      const user = firebase.auth().currentUser;
+      if (!user) return;
+
+      await firebase.database().ref(`rooms/${roomKey}/votes/${user.uid}`).set(name);
+    });
+    voteList.appendChild(li);
+  });
+
+  const ref = firebase.database().ref(`rooms/${roomKey}/votes`);
+  ref.on('value', snapshot => {
+    const votes = snapshot.val() || {};
+    const totalVotes = Object.keys(votes).length;
+
+    voteStatus.textContent = `🗳️ ${totalVotes}/${players.length - 1} votes enregistrés`;
+
+    if (totalVotes >= players.length - 1) {
+      ref.off();
+
+      const tally = {};
+      Object.values(votes).forEach(name => {
+        tally[name] = (tally[name] || 0) + 1;
+      });
+
+      let mostVoted = '';
+      let maxVotes = 0;
+      for (let name in tally) {
+        if (tally[name] > maxVotes) {
+          mostVoted = name;
+          maxVotes = tally[name];
+        }
+      }
+
+      const finalMsg = `
+        <p><strong>🕵️ L’imposteur désigné :</strong> ${mostVoted} (${maxVotes} votes)</p>
+        <p><strong>🎯 Le vrai imposteur était :</strong> ${impostor}</p>
+      `;
+      voteResult.innerHTML = finalMsg;
+
+      showReplayOption();
+    }
+  });
+}
+
 function listenToGame() {
   const ref = firebase.database().ref(`rooms/${roomKey}/game`);
   ref.on('value', snapshot => {
@@ -176,7 +233,6 @@ function listenToGame() {
   });
 }
 
-// 🔁 Bouton rejouer
 function showReplayOption() {
   const isLeader = players[0] === currentPlayer;
   replaySection.style.display = 'block';
@@ -192,6 +248,7 @@ function showReplayOption() {
 
 replayBtn.addEventListener('click', () => {
   firebase.database().ref(`rooms/${roomKey}/game`).remove();
+  firebase.database().ref(`rooms/${roomKey}/votes`).remove();
   roleSection.style.display = 'none';
   replaySection.style.display = 'none';
   joinSection.style.display = 'block';
@@ -200,7 +257,6 @@ replayBtn.addEventListener('click', () => {
   localStorage.removeItem('rl_room');
 });
 
-// 🟢 Démarrage + reconnexion automatique
 firebase.auth().onAuthStateChanged(user => {
   if (user) {
     currentUid = user.uid;
