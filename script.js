@@ -195,7 +195,7 @@ function startVoting(impostor) {
 
     voteStatus.textContent = `🗳️ ${totalVotes}/${players.length - 1} votes enregistrés`;
 
-    if (totalVotes >= players.length - 1) {
+    if (totalVotes >= players.length) {
       ref.off();
 
       const tally = {};
