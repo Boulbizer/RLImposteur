@@ -103,26 +103,40 @@ function getRandomChallenges(count = 3) {
   return shuffled.slice(0, count);
 }
 joinBtn.addEventListener('click', async () => {
-    const name = usernameInput.value.trim();
-    if (!name) return;
-  
-    const user = firebase.auth().currentUser;
-    if (!user) return;
-  
-    currentPlayer = name;
-    document.getElementById('pseudo-label').textContent = `👤 ${currentPlayer}`;
-    currentUid = user.uid;
-  
-    const ref = firebase.database().ref(`rooms/${roomKey}/players/${currentUid}`);
-    await ref.set({ name });
-  
-    localStorage.setItem('rl_pseudo', name);
-    localStorage.setItem('rl_room', roomKey);
-  
-    joinSection.style.display = 'none';
-    lobbySection.style.display = 'block';
-    listenToPlayers();
-  });
+  const name = usernameInput.value.trim();
+  const errorDisplay = document.getElementById('pseudo-error');
+  errorDisplay.textContent = '';
+
+  if (!name) return;
+
+  // Vérifier les doublons dans la salle
+  const playersRef = firebase.database().ref(`rooms/${roomKey}/players`);
+  const snapshot = await playersRef.once('value');
+  const existingPlayers = snapshot.val() || {};
+
+  const isDuplicate = Object.values(existingPlayers).some(p => p.name === name);
+
+  if (isDuplicate) {
+    errorDisplay.textContent = "Ce pseudo est déjà utilisé dans cette salle 🚫";
+    return;
+  }
+
+  const user = firebase.auth().currentUser;
+  if (!user) return;
+
+  currentPlayer = name;
+  currentUid = user.uid;
+
+  await playersRef.child(currentUid).set({ name });
+
+  localStorage.setItem('rl_pseudo', name);
+  localStorage.setItem('rl_room', roomKey);
+
+  document.getElementById('username').value = '';
+  joinSection.style.display = 'none';
+  lobbySection.style.display = 'block';
+  listenToPlayers();
+});
   
   startBtn.addEventListener('click', () => {
     if (players.length < 4) return;
