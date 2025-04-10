@@ -47,9 +47,16 @@ copyBtn.addEventListener('click', () => {
   });
 });
 
-createRoomBtn.addEventListener('click', () => {
+createRoomBtn.addEventListener('click', async () => {
   const randomRoom = `rocket-${Math.random().toString(36).substring(2, 7)}`;
-  window.location.href = `?salle=${randomRoom}`;
+  const user = firebase.auth().currentUser;
+
+  if (user) {
+    await firebase.database().ref(`rooms/${randomRoom}/hostUid`).set(user.uid);
+    window.location.href = `?salle=${randomRoom}`;
+  } else {
+    window.location.href = `?salle=${randomRoom}`;
+  }
 });
 
 function updatePlayerListUI(players) {
@@ -60,9 +67,13 @@ function updatePlayerListUI(players) {
     playerList.appendChild(li);
   });
 
-  const isLeader = players[0] === currentPlayer;
-  startBtn.style.display = isLeader && players.length >= 4 ? 'inline-block' : 'none';
-}
+  firebase.database().ref(`rooms/${roomKey}/hostUid`).once('value').then(snap => {
+    const hostUid = snap.val();
+    const isLeader = currentUid === hostUid;
+
+    startBtn.style.display = isLeader && players.length >= 4 ? 'inline-block' : 'none';
+  });
+
 
 function listenToPlayers() {
   const ref = firebase.database().ref(`rooms/${roomKey}/players`);
@@ -329,18 +340,32 @@ replayBtn.addEventListener('click', () => {
 firebase.auth().onAuthStateChanged(user => {
   if (user) {
     currentUid = user.uid;
+
     if (roomKey) {
       const savedName = localStorage.getItem('rl_pseudo');
       const savedRoom = localStorage.getItem('rl_room');
+
+      // Si on retrouve le nom en local ET que c'est la bonne salle
       if (savedName && savedRoom === roomKey) {
         currentPlayer = savedName;
         const ref = firebase.database().ref(`rooms/${roomKey}/players/${user.uid}`);
         ref.set({ name: currentPlayer });
         joinSection.style.display = 'none';
         lobbySection.style.display = 'block';
+      } else {
+        // 🧠 Sinon, vérifie si ce joueur est déjà inscrit dans Firebase
+        firebase.database().ref(`rooms/${roomKey}/players/${user.uid}`).once('value').then(snap => {
+          if (snap.exists()) {
+            currentPlayer = snap.val().name;
+            joinSection.style.display = 'none';
+            lobbySection.style.display = 'block';
+          }
+        });
       }
+
       listenToPlayers();
       listenToGame();
     }
   }
 });
+
