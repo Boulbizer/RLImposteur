@@ -135,13 +135,22 @@ function showRole(impostor, challenges) {
   lobbySection.style.display = 'none';
   roleSection.style.display = 'block';
 
-  if (currentPlayer === impostor) {
-    roleDisplay.classList.add('impostor');
-    roleDisplay.textContent = `🚨 Tu es l’IMPOSTEUR du match !\n\n🎯 Tes défis :\n${challenges.map(c => `• ${c}`).join('\n')}`;
-  } else {
-    roleDisplay.classList.add('citizen');
-    roleDisplay.textContent = "🟢 Tu es un coéquipier loyal.\nGagne la partie et repère l’imposteur.";
-  }
+ roleDisplay.classList.remove('impostor', 'citizen');
+void roleDisplay.offsetWidth; // Reset animation
+
+if (currentPlayer === impostor) {
+  roleDisplay.classList.add('impostor');
+  roleDisplay.textContent = `🚨 Tu es l’IMPOSTEUR du match !\n\n🎯 Tes défis :\n${challenges.map(c => `• ${c}`).join('\n')}`;
+} else {
+  roleDisplay.classList.add('citizen');
+  roleDisplay.textContent = "🟢 Tu es un coéquipier loyal.\nGagne la partie et repère l’imposteur.";
+}
+
+roleDisplay.style.opacity = '0';
+setTimeout(() => {
+  roleDisplay.style.opacity = '1';
+}, 50);
+
 
   showReplayOption();
 }
