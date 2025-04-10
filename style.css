@@ -95,3 +95,14 @@ button:hover {
 #role-display.citizen {
   color: #00ff88;
   text-shadow
+
+  #copy-room-btn {
+  background-color: #00cc88;
+  box-shadow: 0 0 8px rgba(0, 204, 136, 0.4);
+}
+
+#copy-room-btn:hover {
+  background-color: #00aa77;
+  box-shadow: 0 0 12px rgba(0, 204, 136, 0.6);
+}
+
