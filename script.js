@@ -229,20 +229,28 @@ joinBtn.addEventListener('click', async () => {
         });
       }
 
-      // Bonus pour l’imposteur s’il n’a pas été désigné
-      const impostorUidEntry = Object.entries(currentScores).find(
-        ([uid, data]) => data.name === realImpostor
-      );
-      if (impostorUidEntry) {
-        const [impostorUid, impostorData] = impostorUidEntry;
-        const wasCaught = Object.values(votes).includes(realImpostor);
-        if (!wasCaught) {
-          const prev = impostorData.points || 0;
-          await scoresRef.child(impostorUid).update({
-            points: prev + 3
-          });
-        }
-      }
+// Nouveau calcul : +1 point à l’imposteur pour chaque vote erroné (hors le sien)
+const impostorUid = Object.entries(currentScores).find(
+  ([uid, data]) => data.name === realImpostor
+)?.[0];
+
+if (impostorUid) {
+  let impostorPointsToAdd = 0;
+
+  for (let [voterUid, votedName] of Object.entries(votes)) {
+    if (
+      votedName !== realImpostor &&  // le vote est faux
+      voterUid !== impostorUid        // ce n’est pas l’imposteur
+    ) {
+      impostorPointsToAdd++;
+    }
+  }
+
+  const prev = currentScores[impostorUid]?.points || 0;
+  await scoresRef.child(impostorUid).update({
+    points: prev + impostorPointsToAdd
+  });
+}
 
       voteResult.innerHTML = `
         <p><strong>🕵️ L’imposteur désigné :</strong> ${mostVoted} (${maxVotes} votes)</p>
