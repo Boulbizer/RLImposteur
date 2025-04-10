@@ -60,19 +60,20 @@ createRoomBtn.addEventListener('click', async () => {
 });
 
 function updatePlayerListUI(players) {
-  playerList.innerHTML = '';
-  players.forEach(p => {
-    const li = document.createElement('li');
-    li.textContent = p;
-    playerList.appendChild(li);
-  });
-
-  firebase.database().ref(`rooms/${roomKey}/hostUid`).once('value').then(snap => {
-    const hostUid = snap.val();
-    const isLeader = currentUid === hostUid;
-
-    startBtn.style.display = isLeader && players.length >= 4 ? 'inline-block' : 'none';
-  });
+    playerList.innerHTML = '';
+    players.forEach(p => {
+      const li = document.createElement('li');
+      li.textContent = p;
+      playerList.appendChild(li);
+    });
+  
+    firebase.database().ref(`rooms/${roomKey}/hostUid`).once('value').then(snap => {
+      const hostUid = snap.val();
+      const isLeader = currentUid === hostUid;
+      startBtn.style.display = isLeader && players.length >= 4 ? 'inline-block' : 'none';
+    });
+  }
+  
 
 
 function listenToPlayers() {
@@ -368,4 +369,3 @@ firebase.auth().onAuthStateChanged(user => {
     }
   }
 });
-
