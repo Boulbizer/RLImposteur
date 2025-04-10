@@ -193,7 +193,7 @@ function startVoting(impostor) {
     const votes = snapshot.val() || {};
     const totalVotes = Object.keys(votes).length;
 
-    voteStatus.textContent = `🗳️ ${totalVotes}/${players.length - 1} votes enregistrés`;
+    voteStatus.textContent = `🗳️ ${totalVotes}/${players.length} votes enregistrés`;
 
     if (totalVotes >= players.length) {
       ref.off();
