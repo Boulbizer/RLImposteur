@@ -306,6 +306,7 @@ replayBtn.addEventListener('click', () => {
   firebase.database().ref(`rooms/${roomKey}/votes`).remove();
   roleSection.style.display = 'none';
   voteSection.style.display = 'none';
+  document.getElementById('vote-result').innerHTML = '';
   scoreSection.style.display = 'none';
   replaySection.style.display = 'none';
   joinSection.style.display = 'block';
