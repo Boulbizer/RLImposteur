@@ -1,66 +1,69 @@
 body {
-  font-family: 'Segoe UI', sans-serif;
-  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-  color: #f1f1f1;
   margin: 0;
   padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(145deg, #0d0d0d, #1f1f1f);
+  color: #f0f0f0;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  min-height: 100vh;
 }
 
 .container {
-  background-color: rgba(0, 0, 0, 0.85);
-  padding: 40px;
-  border-radius: 15px;
-  box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
-  max-width: 420px;
+  background-color: #121212;
+  border: 2px solid #00c3ff;
+  border-radius: 20px;
+  padding: 40px 30px;
+  box-shadow: 0 0 20px rgba(0, 195, 255, 0.3);
+  max-width: 480px;
   width: 90%;
   text-align: center;
 }
 
 .title {
-  font-size: 28px;
-  margin-bottom: 10px;
+  font-size: 30px;
+  margin-bottom: 15px;
   color: #00c3ff;
-  text-shadow: 0 0 5px #00c3ff;
+  text-shadow: 0 0 8px #00c3ff;
 }
 
 .room-id {
   font-size: 14px;
-  color: #ccc;
   margin-bottom: 20px;
+  color: #aaa;
 }
 
 input[type="text"] {
-  padding: 12px;
+  padding: 12px 15px;
   width: 80%;
   margin-bottom: 20px;
   border-radius: 10px;
   border: none;
+  background-color: #222;
+  color: white;
   font-size: 16px;
   text-align: center;
   outline: none;
 }
 
 button {
-  padding: 12px 25px;
+  padding: 12px 20px;
   border: none;
-  border-radius: 10px;
-  background-color: #ff7b00;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: bold;
   color: white;
   cursor: pointer;
-  font-weight: bold;
-  font-size: 16px;
-  transition: 0.3s ease;
-  box-shadow: 0 0 8px rgba(255, 123, 0, 0.4);
+  background: linear-gradient(90deg, #00c3ff, #007acc);
+  box-shadow: 0 0 10px rgba(0, 195, 255, 0.4);
+  transition: all 0.25s ease;
   margin-top: 10px;
 }
 
 button:hover {
-  background-color: #e06800;
-  box-shadow: 0 0 12px rgba(255, 140, 0, 0.6);
+  transform: scale(1.03);
+  box-shadow: 0 0 15px rgba(0, 195, 255, 0.7);
 }
 
 #player-list {
@@ -70,39 +73,70 @@ button:hover {
 }
 
 #player-list li {
-  margin: 8px 0;
+  margin: 6px 0;
+  padding: 6px 12px;
+  border-radius: 10px;
+  background: #1a1a1a;
+  color: #00eaff;
   font-weight: 500;
-  color: #00ffff;
-  text-shadow: 0 0 5px #00ffff;
+  text-shadow: 0 0 5px #00eaff;
 }
 
 #role-display {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: bold;
-  margin-top: 20px;
+  padding: 20px;
+  margin-top: 15px;
+  border-radius: 12px;
   white-space: pre-line;
-  padding: 15px;
   background-color: rgba(255, 255, 255, 0.05);
-  border-radius: 10px;
-  line-height: 1.5;
+  animation: roleFadeIn 1.5s ease forwards;
+  opacity: 0;
 }
 
 #role-display.impostor {
   color: #ff4444;
-  text-shadow: 0 0 8px #ff0000;
+  text-shadow: 0 0 12px #ff2222;
+  border: 2px solid #ff4444;
 }
 
 #role-display.citizen {
   color: #00ff88;
-  text-shadow
+  text-shadow: 0 0 10px #00ff88;
+  border: 2px solid #00ff88;
+}
 
-  #copy-room-btn {
-  background-color: #00cc88;
+@keyframes roleFadeIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.9) rotateX(-20deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotateX(0);
+  }
+}
+
+#replay-btn {
+  background: linear-gradient(90deg, #ff7b00, #e65c00);
+  box-shadow: 0 0 10px rgba(255, 123, 0, 0.4);
+}
+
+#replay-btn:hover {
+  box-shadow: 0 0 16px rgba(255, 123, 0, 0.7);
+}
+
+#copy-room-btn {
+  background: linear-gradient(90deg, #00cc88, #00996b);
   box-shadow: 0 0 8px rgba(0, 204, 136, 0.4);
 }
 
 #copy-room-btn:hover {
-  background-color: #00aa77;
   box-shadow: 0 0 12px rgba(0, 204, 136, 0.6);
 }
 
+.small-note {
+  font-size: 13px;
+  color: #ccc;
+  margin-top: 5px;
+}
