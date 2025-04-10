@@ -17,8 +17,9 @@ const copyFeedback = document.getElementById('copy-feedback');
 let currentPlayer = '';
 let roomKey = null;
 let players = [];
+let currentUid = '';
 
-// 🔐 Obtenir le nom de salle depuis l’URL
+// 🔐 Obtenir la salle depuis l’URL
 function getRoomKey() {
   const params = new URLSearchParams(window.location.search);
   return params.get('salle');
@@ -27,11 +28,9 @@ function getRoomKey() {
 roomKey = getRoomKey();
 
 if (!roomKey) {
-  // Attente de création de salle
   joinSection.style.display = 'none';
   document.getElementById('create-room-section').style.display = 'block';
 } else {
-  // Salle existante
   roomNameDisplay.textContent = `Salle : ${roomKey}`;
   joinSection.style.display = 'block';
   document.getElementById('create-room-section').style.display = 'none';
@@ -47,13 +46,13 @@ copyBtn.addEventListener('click', () => {
   });
 });
 
-// 🎲 Générer un nom de salle aléatoire
+// 🎲 Générer une salle
 createRoomBtn.addEventListener('click', () => {
   const randomRoom = `rocket-${Math.random().toString(36).substring(2, 7)}`;
   window.location.href = `?salle=${randomRoom}`;
 });
 
-// 🔄 Mettre à jour la liste des joueurs dans Firebase
+// 🔁 Lecture en temps réel des joueurs
 function updatePlayerListUI(players) {
   playerList.innerHTML = '';
   players.forEach(p => {
@@ -66,17 +65,16 @@ function updatePlayerListUI(players) {
   startBtn.style.display = isLeader && players.length >= 4 ? 'inline-block' : 'none';
 }
 
-// 🔁 Écouter les joueurs en temps réel
 function listenToPlayers() {
   const ref = firebase.database().ref(`rooms/${roomKey}/players`);
   ref.on('value', snapshot => {
-    const list = snapshot.val() || [];
-    players = list;
+    const data = snapshot.val() || {};
+    players = Object.values(data).map(p => p.name);
     updatePlayerListUI(players);
   });
 }
 
-// 🎯 Défis
+// 🎯 Défis de l’imposteur
 const impostorChallenges = [
   "Tente de rater une balle facile sans te faire remarquer",
   "Fais une retournée inutile en pleine action",
@@ -96,22 +94,22 @@ function getRandomChallenges(count = 3) {
 }
 
 // 🔘 Rejoindre la salle
-joinBtn.addEventListener('click', () => {
+joinBtn.addEventListener('click', async () => {
   const name = usernameInput.value.trim();
   if (!name) return;
 
+  const user = firebase.auth().currentUser;
+  if (!user) return;
+
   currentPlayer = name;
-  const ref = firebase.database().ref(`rooms/${roomKey}/players`);
-  ref.once('value').then(snapshot => {
-    const existing = snapshot.val() || [];
-    if (!existing.includes(name)) {
-      existing.push(name);
-      ref.set(existing);
-    }
-    joinSection.style.display = 'none';
-    lobbySection.style.display = 'block';
-    listenToPlayers();
-  });
+  currentUid = user.uid;
+
+  const ref = firebase.database().ref(`rooms/${roomKey}/players/${currentUid}`);
+  await ref.set({ name });
+
+  joinSection.style.display = 'none';
+  lobbySection.style.display = 'block';
+  listenToPlayers();
 });
 
 // 🎬 Lancer la partie
@@ -128,7 +126,7 @@ startBtn.addEventListener('click', () => {
   });
 });
 
-// 🎯 Afficher le rôle
+// 🎯 Afficher le rôle du joueur
 function showRole(impostor, challenges) {
   lobbySection.style.display = 'none';
   roleSection.style.display = 'block';
@@ -144,7 +142,7 @@ function showRole(impostor, challenges) {
   showReplayOption();
 }
 
-// 👂 Suivre la partie en direct
+// 🔁 Écoute des infos de partie
 function listenToGame() {
   const ref = firebase.database().ref(`rooms/${roomKey}/game`);
   ref.on('value', snapshot => {
@@ -178,7 +176,12 @@ replayBtn.addEventListener('click', () => {
 });
 
 // 🟢 Démarrage
-if (roomKey) {
-  listenToPlayers();
-  listenToGame();
-}
+firebase.auth().onAuthStateChanged(user => {
+  if (user) {
+    currentUid = user.uid;
+    if (roomKey) {
+      listenToPlayers();
+      listenToGame();
+    }
+  }
+});
