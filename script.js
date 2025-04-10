@@ -26,6 +26,20 @@ function getRoomKey() {
 const roomKey = getRoomKey();
 if (roomKey) {
   roomNameDisplay.textContent = `Salle : ${roomKey}`;
+  // Affiche le bouton "copier le lien"
+document.getElementById('copy-room-section').style.display = 'block';
+
+const copyBtn = document.getElementById('copy-room-btn');
+const feedback = document.getElementById('copy-feedback');
+
+copyBtn.addEventListener('click', () => {
+  const fullUrl = `${window.location.origin}?salle=${roomKey}`;
+  navigator.clipboard.writeText(fullUrl).then(() => {
+    feedback.textContent = "Lien copié ! 🎉";
+    setTimeout(() => (feedback.textContent = ""), 2000);
+  });
+});
+
   createRoomSection.style.display = 'none';
   joinSection.style.display = 'block';
 } else {
