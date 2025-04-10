@@ -107,6 +107,10 @@ joinBtn.addEventListener('click', async () => {
   const ref = firebase.database().ref(`rooms/${roomKey}/players/${currentUid}`);
   await ref.set({ name });
 
+  // ✅ Sauvegarde locale pour reconnexion automatique
+  localStorage.setItem('rl_pseudo', name);
+  localStorage.setItem('rl_room', roomKey);
+
   joinSection.style.display = 'none';
   lobbySection.style.display = 'block';
   listenToPlayers();
@@ -173,13 +177,26 @@ replayBtn.addEventListener('click', () => {
   replaySection.style.display = 'none';
   joinSection.style.display = 'block';
   usernameInput.value = '';
+  localStorage.removeItem('rl_pseudo');
+  localStorage.removeItem('rl_room');
 });
 
-// 🟢 Démarrage
+// 🟢 Démarrage + reconnexion automatique
 firebase.auth().onAuthStateChanged(user => {
   if (user) {
     currentUid = user.uid;
     if (roomKey) {
+      const savedName = localStorage.getItem('rl_pseudo');
+      const savedRoom = localStorage.getItem('rl_room');
+
+      if (savedName && savedRoom === roomKey) {
+        currentPlayer = savedName;
+        const ref = firebase.database().ref(`rooms/${roomKey}/players/${user.uid}`);
+        ref.set({ name: currentPlayer });
+        joinSection.style.display = 'none';
+        lobbySection.style.display = 'block';
+      }
+
       listenToPlayers();
       listenToGame();
     }
