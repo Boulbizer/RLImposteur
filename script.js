@@ -135,25 +135,34 @@ function showRole(impostor, challenges) {
   lobbySection.style.display = 'none';
   roleSection.style.display = 'block';
 
- roleDisplay.classList.remove('impostor', 'citizen');
-void roleDisplay.offsetWidth; // Reset animation
+  const badge = document.createElement('div');
+  badge.id = 'role-badge';
 
-if (currentPlayer === impostor) {
-  roleDisplay.classList.add('impostor');
-  roleDisplay.textContent = `🚨 Tu es l’IMPOSTEUR du match !\n\n🎯 Tes défis :\n${challenges.map(c => `• ${c}`).join('\n')}`;
-} else {
-  roleDisplay.classList.add('citizen');
-  roleDisplay.textContent = "🟢 Tu es un coéquipier loyal.\nGagne la partie et repère l’imposteur.";
-}
+  if (currentPlayer === impostor) {
+    badge.classList.add('impostor');
+    badge.textContent = '🚨 IMPOSTEUR';
 
-roleDisplay.style.opacity = '0';
-setTimeout(() => {
-  roleDisplay.style.opacity = '1';
-}, 50);
+    roleDisplay.innerHTML = '';
+    roleDisplay.appendChild(badge);
+    roleDisplay.innerHTML += `<div style="margin-top:10px; text-align:left;">
+      <strong>🎯 Tes défis :</strong><br>${challenges.map(c => `• ${c}`).join('<br>')}
+    </div>`;
+  } else {
+    badge.classList.add('citizen');
+    badge.textContent = '🟢 COÉQUIPIER';
 
+    roleDisplay.innerHTML = '';
+    roleDisplay.appendChild(badge);
+    roleDisplay.innerHTML += `<p>Gagne la partie et démasque l’imposteur.</p>`;
+  }
+
+  roleDisplay.classList.remove('show');
+  void roleDisplay.offsetWidth;
+  roleDisplay.classList.add('show');
 
   showReplayOption();
 }
+
 
 // 🔁 Écoute des infos de partie
 function listenToGame() {
