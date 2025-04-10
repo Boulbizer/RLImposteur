@@ -252,6 +252,7 @@ replayBtn.addEventListener('click', () => {
   roleSection.style.display = 'none';
   replaySection.style.display = 'none';
   joinSection.style.display = 'block';
+  document.getElementById('vote-section').style.display = 'none'; // 👈 nettoyage UI vote
   usernameInput.value = '';
   localStorage.removeItem('rl_pseudo');
   localStorage.removeItem('rl_room');
