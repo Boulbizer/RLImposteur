@@ -10,69 +10,73 @@ const replayBtn = document.getElementById('replay-btn');
 const replaySection = document.getElementById('replay-section');
 const replayInfo = document.getElementById('replay-info');
 const roomNameDisplay = document.getElementById('room-name');
-const createRoomSection = document.getElementById('create-room-section');
 const createRoomBtn = document.getElementById('create-room-btn');
+const copyBtn = document.getElementById('copy-room-btn');
+const copyFeedback = document.getElementById('copy-feedback');
 
-let players = [];
 let currentPlayer = '';
-let gameStarted = false;
+let roomKey = null;
+let players = [];
 
-// 🔐 Salle à partir de l'URL
+// 🔐 Obtenir le nom de salle depuis l’URL
 function getRoomKey() {
   const params = new URLSearchParams(window.location.search);
   return params.get('salle');
 }
 
-const roomKey = getRoomKey();
-if (roomKey) {
+roomKey = getRoomKey();
+
+if (!roomKey) {
+  // Attente de création de salle
+  joinSection.style.display = 'none';
+  document.getElementById('create-room-section').style.display = 'block';
+} else {
+  // Salle existante
   roomNameDisplay.textContent = `Salle : ${roomKey}`;
-  // Affiche le bouton "copier le lien"
-document.getElementById('copy-room-section').style.display = 'block';
+  joinSection.style.display = 'block';
+  document.getElementById('create-room-section').style.display = 'none';
+  document.getElementById('copy-room-section').style.display = 'block';
+}
 
-const copyBtn = document.getElementById('copy-room-btn');
-const feedback = document.getElementById('copy-feedback');
-
+// 📋 Copier le lien
 copyBtn.addEventListener('click', () => {
-  const fullUrl = `${window.location.origin}?salle=${roomKey}`;
-  navigator.clipboard.writeText(fullUrl).then(() => {
-    feedback.textContent = "Lien copié ! 🎉";
-    setTimeout(() => (feedback.textContent = ""), 2000);
+  const url = `${window.location.origin}?salle=${roomKey}`;
+  navigator.clipboard.writeText(url).then(() => {
+    copyFeedback.textContent = "Lien copié ! 🎉";
+    setTimeout(() => (copyFeedback.textContent = ""), 2000);
   });
 });
 
-  createRoomSection.style.display = 'none';
-  joinSection.style.display = 'block';
-} else {
-  roomNameDisplay.textContent = `Aucune salle sélectionnée`;
-  joinSection.style.display = 'none';
-}
-
-// 📦 Stockage local par salle
-function saveRoomData(key, value) {
-  localStorage.setItem(`${roomKey}_${key}`, JSON.stringify(value));
-}
-
-function getRoomData(key) {
-  const val = localStorage.getItem(`${roomKey}_${key}`);
-  return val ? JSON.parse(val) : null;
-}
-
-function removeRoomData(key) {
-  localStorage.removeItem(`${roomKey}_${key}`);
-}
-
-// 🎲 Générateur de nom de salle
-function generateRandomRoomName() {
-  const random = Math.random().toString(36).substring(2, 7);
-  return `rocket-${random}`;
-}
-
+// 🎲 Générer un nom de salle aléatoire
 createRoomBtn.addEventListener('click', () => {
-  const newRoom = generateRandomRoomName();
-  window.location.href = `?salle=${newRoom}`;
+  const randomRoom = `rocket-${Math.random().toString(36).substring(2, 7)}`;
+  window.location.href = `?salle=${randomRoom}`;
 });
 
-// 🎯 Défis imposteur
+// 🔄 Mettre à jour la liste des joueurs dans Firebase
+function updatePlayerListUI(players) {
+  playerList.innerHTML = '';
+  players.forEach(p => {
+    const li = document.createElement('li');
+    li.textContent = p;
+    playerList.appendChild(li);
+  });
+
+  const isLeader = players[0] === currentPlayer;
+  startBtn.style.display = isLeader && players.length >= 4 ? 'inline-block' : 'none';
+}
+
+// 🔁 Écouter les joueurs en temps réel
+function listenToPlayers() {
+  const ref = firebase.database().ref(`rooms/${roomKey}/players`);
+  ref.on('value', snapshot => {
+    const list = snapshot.val() || [];
+    players = list;
+    updatePlayerListUI(players);
+  });
+}
+
+// 🎯 Défis
 const impostorChallenges = [
   "Tente de rater une balle facile sans te faire remarquer",
   "Fais une retournée inutile en pleine action",
@@ -91,77 +95,69 @@ function getRandomChallenges(count = 3) {
   return shuffled.slice(0, count);
 }
 
+// 🔘 Rejoindre la salle
 joinBtn.addEventListener('click', () => {
-  const username = usernameInput.value.trim();
-  if (username && !players.includes(username)) {
-    currentPlayer = username;
-    players.push(username);
-    saveRoomData('players', players);
+  const name = usernameInput.value.trim();
+  if (!name) return;
+
+  currentPlayer = name;
+  const ref = firebase.database().ref(`rooms/${roomKey}/players`);
+  ref.once('value').then(snapshot => {
+    const existing = snapshot.val() || [];
+    if (!existing.includes(name)) {
+      existing.push(name);
+      ref.set(existing);
+    }
     joinSection.style.display = 'none';
     lobbySection.style.display = 'block';
-    updatePlayerList();
-  }
-});
-
-startBtn.addEventListener('click', () => {
-  if (players.length >= 4 && players.length <= 6) {
-    assignRoles();
-    showRole();
-  } else {
-    alert("Le nombre de joueurs doit être entre 4 et 6 !");
-  }
-});
-
-function updatePlayerList() {
-  playerList.innerHTML = '';
-  players.forEach(player => {
-    const li = document.createElement('li');
-    li.textContent = player;
-    playerList.appendChild(li);
+    listenToPlayers();
   });
+});
 
-  if (players.length >= 4 && players.length <= 6 && currentPlayer === players[0]) {
-    startBtn.style.display = 'inline-block';
-  }
-}
+// 🎬 Lancer la partie
+startBtn.addEventListener('click', () => {
+  if (players.length < 4) return;
 
-function assignRoles() {
-  const impostorIndex = Math.floor(Math.random() * players.length);
-  const impostorName = players[impostorIndex];
+  const impostor = players[Math.floor(Math.random() * players.length)];
   const challenges = getRandomChallenges(3);
 
-  saveRoomData('impostor', impostorName);
-  saveRoomData('impostorChallenges', challenges);
-  saveRoomData('gameStarted', true);
-  gameStarted = true;
-}
+  firebase.database().ref(`rooms/${roomKey}/game`).set({
+    impostor,
+    challenges,
+    started: true
+  });
+});
 
-function showRole() {
+// 🎯 Afficher le rôle
+function showRole(impostor, challenges) {
   lobbySection.style.display = 'none';
   roleSection.style.display = 'block';
 
-  const impostor = getRoomData('impostor');
-
   if (currentPlayer === impostor) {
-    const challenges = getRoomData('impostorChallenges');
-    let challengeText = "🚨 Tu es l’IMPOSTEUR du match !\n\n🎯 Tes défis :\n";
-    challenges.forEach(c => {
-      challengeText += `• ${c}\n`;
-    });
-
-    roleDisplay.textContent = challengeText;
     roleDisplay.classList.add('impostor');
+    roleDisplay.textContent = `🚨 Tu es l’IMPOSTEUR du match !\n\n🎯 Tes défis :\n${challenges.map(c => `• ${c}`).join('\n')}`;
   } else {
-    roleDisplay.textContent = "🟢 Tu es un coéquipier loyal.\nGagne la partie et repère l’imposteur.";
     roleDisplay.classList.add('citizen');
+    roleDisplay.textContent = "🟢 Tu es un coéquipier loyal.\nGagne la partie et repère l’imposteur.";
   }
 
   showReplayOption();
 }
 
+// 👂 Suivre la partie en direct
+function listenToGame() {
+  const ref = firebase.database().ref(`rooms/${roomKey}/game`);
+  ref.on('value', snapshot => {
+    const game = snapshot.val();
+    if (game?.started) {
+      showRole(game.impostor, game.challenges);
+    }
+  });
+}
+
+// 🔁 Bouton rejouer
 function showReplayOption() {
   const isLeader = players[0] === currentPlayer;
-
   replaySection.style.display = 'block';
 
   if (isLeader) {
@@ -173,23 +169,16 @@ function showReplayOption() {
   }
 }
 
-function resetGame() {
-  removeRoomData('impostor');
-  removeRoomData('impostorChallenges');
-  removeRoomData('gameStarted');
-
+replayBtn.addEventListener('click', () => {
+  firebase.database().ref(`rooms/${roomKey}/game`).remove();
   roleSection.style.display = 'none';
   replaySection.style.display = 'none';
   joinSection.style.display = 'block';
   usernameInput.value = '';
-}
+});
 
-replayBtn.addEventListener('click', resetGame);
-
-// 🔁 Restauration
+// 🟢 Démarrage
 if (roomKey) {
-  const existingPlayers = getRoomData('players');
-  if (existingPlayers) {
-    players = existingPlayers;
-  }
+  listenToPlayers();
+  listenToGame();
 }
