@@ -156,9 +156,10 @@ function showRole(impostor, challenges) {
     roleDisplay.innerHTML += `<p>Gagne la partie et démasque l’imposteur.</p>`;
   }
 
-  roleDisplay.classList.remove('show');
-  void roleDisplay.offsetWidth;
-  roleDisplay.classList.add('show');
+  roleDisplay.classList.remove('show', 'animate');
+void roleDisplay.offsetWidth;
+roleDisplay.classList.add('show', 'animate');
+
 
   showReplayOption();
 }
