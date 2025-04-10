@@ -324,8 +324,6 @@ replayBtn.addEventListener('click', () => {
   replaySection.style.display = 'none';
   joinSection.style.display = 'block';
   usernameInput.value = '';
-  localStorage.removeItem('rl_pseudo');
-  localStorage.removeItem('rl_room');
 });
 
 firebase.auth().onAuthStateChanged(user => {
