@@ -1,8 +1,10 @@
+@import url('https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700&display=swap');
+
 body {
   margin: 0;
   padding: 0;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(145deg, #0d0d0d, #1f1f1f);
+  font-family: 'Titillium Web', sans-serif;
+  background: radial-gradient(ellipse at center, #0d0d0d 0%, #121212 100%);
   color: #f0f0f0;
   display: flex;
   justify-content: center;
@@ -11,11 +13,11 @@ body {
 }
 
 .container {
-  background-color: #121212;
-  border: 2px solid #00c3ff;
-  border-radius: 20px;
+  background-color: rgba(20, 20, 20, 0.95);
+  border: 1px solid #333;
+  border-radius: 16px;
   padding: 40px 30px;
-  box-shadow: 0 0 20px rgba(0, 195, 255, 0.3);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
   max-width: 480px;
   width: 90%;
   text-align: center;
@@ -23,120 +25,123 @@ body {
 
 .title {
   font-size: 30px;
-  margin-bottom: 15px;
-  color: #00c3ff;
-  text-shadow: 0 0 8px #00c3ff;
+  margin-bottom: 10px;
+  font-weight: 700;
+  color: #00bfff;
 }
 
 .room-id {
   font-size: 14px;
+  color: #888;
   margin-bottom: 20px;
-  color: #aaa;
 }
 
 input[type="text"] {
   padding: 12px 15px;
   width: 80%;
   margin-bottom: 20px;
-  border-radius: 10px;
+  border-radius: 8px;
   border: none;
-  background-color: #222;
+  background-color: #2a2a2a;
   color: white;
   font-size: 16px;
   text-align: center;
   outline: none;
+  transition: 0.2s ease;
+}
+
+input[type="text"]:focus {
+  background-color: #333;
 }
 
 button {
   padding: 12px 20px;
   border: none;
-  border-radius: 12px;
+  border-radius: 8px;
   font-size: 16px;
-  font-weight: bold;
+  font-weight: 600;
   color: white;
   cursor: pointer;
-  background: linear-gradient(90deg, #00c3ff, #007acc);
-  box-shadow: 0 0 10px rgba(0, 195, 255, 0.4);
-  transition: all 0.25s ease;
+  background-color: #007acc;
+  transition: 0.2s ease;
   margin-top: 10px;
 }
 
 button:hover {
-  transform: scale(1.03);
-  box-shadow: 0 0 15px rgba(0, 195, 255, 0.7);
+  background-color: #005fa3;
 }
 
 #player-list {
-  list-style-type: none;
+  list-style: none;
   padding: 0;
   margin: 15px 0;
 }
 
 #player-list li {
   margin: 6px 0;
-  padding: 6px 12px;
-  border-radius: 10px;
-  background: #1a1a1a;
-  color: #00eaff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background-color: #1e1e1e;
+  color: #00bfff;
   font-weight: 500;
-  text-shadow: 0 0 5px #00eaff;
+  text-align: left;
 }
 
 #role-display {
-  font-size: 20px;
-  font-weight: bold;
+  margin-top: 20px;
+  font-size: 18px;
   padding: 20px;
-  margin-top: 15px;
   border-radius: 12px;
-  white-space: pre-line;
   background-color: rgba(255, 255, 255, 0.05);
-  animation: roleFadeIn 1.5s ease forwards;
+  border: 1px solid #444;
+  display: none;
   opacity: 0;
+  transform: scale(0.95);
+  transition: all 0.5s ease;
 }
 
-#role-display.impostor {
-  color: #ff4444;
-  text-shadow: 0 0 12px #ff2222;
-  border: 2px solid #ff4444;
+#role-display.show {
+  display: block;
+  opacity: 1;
+  transform: scale(1);
 }
 
-#role-display.citizen {
-  color: #00ff88;
-  text-shadow: 0 0 10px #00ff88;
-  border: 2px solid #00ff88;
+#role-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  margin-bottom: 12px;
+  font-weight: 700;
+  border-radius: 6px;
+  font-size: 16px;
+  color: white;
 }
 
-@keyframes roleFadeIn {
-  0% {
-    opacity: 0;
-    transform: scale(0.9) rotateX(-20deg);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1) rotateX(0);
-  }
+#role-badge.impostor {
+  background-color: #ff4444;
+}
+
+#role-badge.citizen {
+  background-color: #00c282;
 }
 
 #replay-btn {
-  background: linear-gradient(90deg, #ff7b00, #e65c00);
-  box-shadow: 0 0 10px rgba(255, 123, 0, 0.4);
+  background-color: #ff7b00;
 }
 
 #replay-btn:hover {
-  box-shadow: 0 0 16px rgba(255, 123, 0, 0.7);
+  background-color: #cc6300;
 }
 
 #copy-room-btn {
-  background: linear-gradient(90deg, #00cc88, #00996b);
-  box-shadow: 0 0 8px rgba(0, 204, 136, 0.4);
+  background-color: #00aa7f;
 }
 
 #copy-room-btn:hover {
-  box-shadow: 0 0 12px rgba(0, 204, 136, 0.6);
+  background-color: #008e6b;
 }
 
 .small-note {
   font-size: 13px;
-  color: #ccc;
+  color: #aaa;
   margin-top: 5px;
 }
