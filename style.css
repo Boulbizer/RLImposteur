@@ -1,0 +1,112 @@
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    color: #f1f1f1;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+  
+  .container {
+    background-color: rgba(0, 0, 0, 0.85);
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+    max-width: 420px;
+    width: 90%;
+    text-align: center;
+  }
+  
+  .title {
+    font-size: 28px;
+    margin-bottom: 10px;
+    color: #00c3ff;
+    text-shadow: 0 0 5px #00c3ff;
+  }
+  
+  .room-id {
+    font-size: 14px;
+    color: #ccc;
+    margin-bottom: 20px;
+  }
+  
+  input[type="text"] {
+    padding: 12px;
+    width: 80%;
+    margin-bottom: 20px;
+    border-radius: 10px;
+    border: none;
+    font-size: 16px;
+    text-align: center;
+    outline: none;
+  }
+  
+  button {
+    padding: 12px 25px;
+    border: none;
+    border-radius: 10px;
+    background-color: #ff7b00;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 16px;
+    transition: 0.3s ease;
+    box-shadow: 0 0 8px rgba(255, 123, 0, 0.4);
+  }
+  
+  button:hover {
+    background-color: #e06800;
+    box-shadow: 0 0 12px rgba(255, 140, 0, 0.6);
+  }
+  
+  #player-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 15px 0;
+  }
+  
+  #player-list li {
+    margin: 8px 0;
+    font-weight: 500;
+    color: #00ffff;
+    text-shadow: 0 0 5px #00ffff;
+  }
+  
+  #role-display {
+    font-size: 18px;
+    font-weight: bold;
+    margin-top: 20px;
+    white-space: pre-line;
+    padding: 15px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    line-height: 1.5;
+  }
+  
+  #role-display.impostor {
+    color: #ff4444;
+    text-shadow: 0 0 8px #ff0000;
+  }
+  
+  #role-display.citizen {
+    color: #00ff88;
+    text-shadow: 0 0 8px #00ff88;
+  }
+  
+  #replay-section {
+    margin-top: 20px;
+  }
+  
+  #replay-btn {
+    background-color: #0099ff;
+    box-shadow: 0 0 8px rgba(0, 153, 255, 0.5);
+  }
+  
+  #replay-btn:hover {
+    background-color: #007acc;
+    box-shadow: 0 0 12px rgba(0, 153, 255, 0.8);
+  }
+  

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Imposteur Rocket League</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1 class="title">🎮 Imposteur Rocket League 🚗</h1>
+    <p id="room-name" class="room-id"></p>
+
+    <div id="join-section">
+      <input type="text" id="username" placeholder="Ton pseudo en jeu" />
+      <button id="join-btn">Rejoindre le match</button>
+    </div>
+
+    <div id="lobby-section" style="display: none;">
+      <h2>🚦 Joueurs en attente :</h2>
+      <ul id="player-list"></ul>
+      <button id="start-btn" style="display: none;">Lancer la partie</button>
+    </div>
+
+    <div id="role-section" style="display: none;">
+      <h2>🎯 Ton rôle dans le match</h2>
+      <p id="role-display"></p>
+    </div>
+
+    <div id="replay-section" style="display: none; margin-top: 20px;">
+      <button id="replay-btn">🔁 Rejouer une partie</button>
+      <p id="replay-info" style="font-size: 14px; color: #aaa;"></p>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
