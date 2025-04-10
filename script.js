@@ -285,6 +285,19 @@ function listenToGame() {
     if (game?.started) {
       showRole(game.impostor, game.challenges);
     }
+    if (!game) {
+      // Le jeu a été "reset", retour au lobby
+      roleSection.style.display = 'none';
+      voteSection.style.display = 'none';
+      replaySection.style.display = 'none';
+      roleDisplay.innerHTML = '';
+      roleDisplay.classList.remove('impostor', 'citizen', 'show', 'animate');
+      document.getElementById('vote-result').innerHTML = '';
+
+      // 👉 Reste dans le lobby avec le score affiché
+      lobbySection.style.display = 'block';
+    }
+
   });
 }
 
