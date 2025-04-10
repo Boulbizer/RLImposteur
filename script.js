@@ -110,6 +110,7 @@ joinBtn.addEventListener('click', async () => {
     if (!user) return;
   
     currentPlayer = name;
+    document.getElementById('pseudo-label').textContent = `👤 ${currentPlayer}`;
     currentUid = user.uid;
   
     const ref = firebase.database().ref(`rooms/${roomKey}/players/${currentUid}`);
@@ -358,6 +359,7 @@ firebase.auth().onAuthStateChanged(user => {
         firebase.database().ref(`rooms/${roomKey}/players/${user.uid}`).once('value').then(snap => {
           if (snap.exists()) {
             currentPlayer = snap.val().name;
+            document.getElementById('pseudo-label').textContent = `👤 ${currentPlayer}`;
             joinSection.style.display = 'none';
             lobbySection.style.display = 'block';
           }
