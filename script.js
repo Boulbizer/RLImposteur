@@ -13,13 +13,14 @@ const roomNameDisplay = document.getElementById('room-name');
 const createRoomBtn = document.getElementById('create-room-btn');
 const copyBtn = document.getElementById('copy-room-btn');
 const copyFeedback = document.getElementById('copy-feedback');
+const scoreBoard = document.getElementById('score-board');
+const scoreSection = document.getElementById('score-section');
 
 let currentPlayer = '';
 let roomKey = null;
 let players = [];
 let currentUid = '';
 
-// Obtenir la salle depuis l’URL
 function getRoomKey() {
   const params = new URLSearchParams(window.location.search);
   return params.get('salle');
@@ -122,7 +123,7 @@ startBtn.addEventListener('click', () => {
     started: true
   });
 
-  firebase.database().ref(`rooms/${roomKey}/votes`).remove(); // reset votes
+  firebase.database().ref(`rooms/${roomKey}/votes`).remove();
 });
 
 function showRole(impostor, challenges) {
@@ -170,29 +171,23 @@ function startVoting(impostor) {
   voteStatus.textContent = 'Clique sur un joueur pour voter.';
 
   players.forEach(name => {
-    if (name === currentPlayer) return;
-
     const li = document.createElement('li');
     li.textContent = name;
     li.addEventListener('click', async () => {
       if (li.classList.contains('voted')) return;
-
       li.classList.add('voted');
       voteStatus.textContent = "✅ Vote enregistré. En attente des autres joueurs...";
-
       const user = firebase.auth().currentUser;
       if (!user) return;
-
       await firebase.database().ref(`rooms/${roomKey}/votes/${user.uid}`).set(name);
     });
     voteList.appendChild(li);
   });
 
   const ref = firebase.database().ref(`rooms/${roomKey}/votes`);
-  ref.on('value', snapshot => {
+  ref.on('value', async snapshot => {
     const votes = snapshot.val() || {};
     const totalVotes = Object.keys(votes).length;
-
     voteStatus.textContent = `🗳️ ${totalVotes}/${players.length} votes enregistrés`;
 
     if (totalVotes >= players.length) {
@@ -212,14 +207,58 @@ function startVoting(impostor) {
         }
       }
 
-      const finalMsg = `
-        <p><strong>🕵️ L’imposteur désigné :</strong> ${mostVoted} (${maxVotes} votes)</p>
-        <p><strong>🎯 Le vrai imposteur était :</strong> ${impostor}</p>
-      `;
-      voteResult.innerHTML = finalMsg;
+      const gameSnap = await firebase.database().ref(`rooms/${roomKey}/game`).get();
+      const realImpostor = gameSnap.val().impostor;
 
+      // Attribution des points
+      const scoresRef = firebase.database().ref(`rooms/${roomKey}/scores`);
+      const scoreSnap = await scoresRef.get();
+      const currentScores = scoreSnap.val() || {};
+
+      for (let uid in votes) {
+        const voteName = votes[uid];
+        const isCorrect = voteName === realImpostor;
+        const prevScore = currentScores[uid]?.points || 0;
+        const name = currentScores[uid]?.name || players.find(p => p !== undefined);
+
+        await scoresRef.child(uid).set({
+          name: name,
+          points: prevScore + (isCorrect ? 1 : 0)
+        });
+      }
+
+      // Impostor bonus
+      const impostorUid = Object.entries(currentScores).find(([uid, val]) => val.name === realImpostor)?.[0];
+      if (impostorUid && !Object.values(votes).includes(realImpostor)) {
+        const prev = currentScores[impostorUid]?.points || 0;
+        await scoresRef.child(impostorUid).update({
+          points: prev + 3
+        });
+      }
+
+      voteResult.innerHTML = `
+        <p><strong>🕵️ L’imposteur désigné :</strong> ${mostVoted} (${maxVotes} votes)</p>
+        <p><strong>🎯 Le vrai imposteur était :</strong> ${realImpostor}</p>
+      `;
+
+      updateScoreboard();
       showReplayOption();
     }
+  });
+}
+
+function updateScoreboard() {
+  const ref = firebase.database().ref(`rooms/${roomKey}/scores`);
+  ref.once('value').then(snapshot => {
+    const data = snapshot.val() || {};
+    const scores = Object.values(data).sort((a, b) => b.points - a.points);
+    scoreBoard.innerHTML = '';
+    scores.forEach(s => {
+      const li = document.createElement('li');
+      li.textContent = `${s.name}: ${s.points} pts`;
+      scoreBoard.appendChild(li);
+    });
+    scoreSection.style.display = 'block';
   });
 }
 
@@ -250,9 +289,10 @@ replayBtn.addEventListener('click', () => {
   firebase.database().ref(`rooms/${roomKey}/game`).remove();
   firebase.database().ref(`rooms/${roomKey}/votes`).remove();
   roleSection.style.display = 'none';
+  voteSection.style.display = 'none';
+  scoreSection.style.display = 'none';
   replaySection.style.display = 'none';
   joinSection.style.display = 'block';
-  document.getElementById('vote-section').style.display = 'none'; // 👈 nettoyage UI vote
   usernameInput.value = '';
   localStorage.removeItem('rl_pseudo');
   localStorage.removeItem('rl_room');
@@ -264,7 +304,6 @@ firebase.auth().onAuthStateChanged(user => {
     if (roomKey) {
       const savedName = localStorage.getItem('rl_pseudo');
       const savedRoom = localStorage.getItem('rl_room');
-
       if (savedName && savedRoom === roomKey) {
         currentPlayer = savedName;
         const ref = firebase.database().ref(`rooms/${roomKey}/players/${user.uid}`);
@@ -272,7 +311,6 @@ firebase.auth().onAuthStateChanged(user => {
         joinSection.style.display = 'none';
         lobbySection.style.display = 'block';
       }
-
       listenToPlayers();
       listenToGame();
     }
