@@ -109,4 +109,25 @@ body {
     background-color: #007acc;
     box-shadow: 0 0 12px rgba(0, 153, 255, 0.8);
   }
+
+#room-name code {
+  font-family: monospace;
+  font-size: 13px;
+}
+
+.small-note {
+  font-size: 13px;
+  color: #ccc;
+  margin-top: 5px;
+}
+
+#create-room-btn {
+  background-color: #14c6ff;
+  box-shadow: 0 0 8px rgba(20, 198, 255, 0.4);
+}
+
+#create-room-btn:hover {
+  background-color: #11a6d9;
+}
+
   
