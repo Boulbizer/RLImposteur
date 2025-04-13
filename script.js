@@ -70,7 +70,7 @@ function updatePlayerListUI(players) {
     firebase.database().ref(`rooms/${roomKey}/hostUid`).once('value').then(snap => {
       const hostUid = snap.val();
       const isLeader = currentUid === hostUid;
-      startBtn.style.display = isLeader && players.length >= 4 ? 'inline-block' : 'none';
+      startBtn.style.display = isLeader && players.length >= 3 ? 'inline-block' : 'none';
     });
   }
   
@@ -139,7 +139,7 @@ joinBtn.addEventListener('click', async () => {
 });
   
   startBtn.addEventListener('click', () => {
-    if (players.length < 4) return;
+    if (players.length < 3) return;
   
     const impostor = players[Math.floor(Math.random() * players.length)];
     const challenges = getRandomChallenges(3);
