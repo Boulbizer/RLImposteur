@@ -58,7 +58,7 @@ const showFeedback = (element, message, duration = 2000) => {
   setTimeout(() => { element.textContent = ""; }, duration);
 };
 
-// Vérifie si l'utilisateur courant est le leader en comparant son uid avec celui stocké dans Firebase
+// Vérifie si l'utilisateur courant est le leader (comparaison de l'UID avec hostUid dans Firebase)
 const isLeader = async () => {
   const snap = await firebase.database().ref(`rooms/${roomKey}/hostUid`).once('value');
   return snap.val() === currentUid;
@@ -106,8 +106,8 @@ const updatePlayerListUI = async (players) => {
   });
   
   // Afficher le bouton "Lancer la partie" uniquement si l'utilisateur est le leader et le nombre de joueurs est suffisant.
-  const leader = await firebase.database().ref(`rooms/${roomKey}/hostUid`).once('value');
-  startBtn.style.display = (currentUid === leader.val() && players.length >= MIN_PLAYERS_TO_START)
+  const leaderSnap = await firebase.database().ref(`rooms/${roomKey}/hostUid`).once('value');
+  startBtn.style.display = (currentUid === leaderSnap.val() && players.length >= MIN_PLAYERS_TO_START)
     ? 'inline-block'
     : 'none';
 };
@@ -123,7 +123,6 @@ const listenToPlayers = () => {
 };
 
 /* ========= INSCRIPTION DES JOUEURS ========= */
-// INSCRIPTION DES JOUEURS (dans joinBtn.addEventListener)
 joinBtn.addEventListener('click', async () => {
   const name = usernameInput.value.trim();
   pseudoError.textContent = "";
@@ -144,16 +143,12 @@ joinBtn.addEventListener('click', async () => {
 
   currentPlayer = name;
   currentUid = user.uid;
-  // Inscription du joueur dans la salle
+  // Inscrire le joueur
   await playersRef.child(currentUid).set({ name });
   
-  // Gérer le cas de déconnexion : supprimer automatiquement le joueur de la salle 
-  firebase.database().ref(`rooms/${roomKey}/players/${currentUid}`)
-    .onDisconnect().remove();
-  
-  // Optionnel: Supprimer les votes du joueur sur déconnexion
-  firebase.database().ref(`rooms/${roomKey}/votes/${currentUid}`)
-    .onDisconnect().remove();
+  // Sur déconnexion, retirer le joueur et ses votes
+  firebase.database().ref(`rooms/${roomKey}/players/${currentUid}`).onDisconnect().remove();
+  firebase.database().ref(`rooms/${roomKey}/votes/${currentUid}`).onDisconnect().remove();
 
   // Sauvegarde locale pour réutilisation
   localStorage.setItem('rl_pseudo', name);
@@ -177,7 +172,8 @@ startBtn.addEventListener('click', () => {
   firebase.database().ref(`rooms/${roomKey}/game`).set({
     impostor,
     challenges,
-    started: true
+    started: true,
+    scoresProcessed: false  // Réinitialisation pour la manche
   });
 
   // Réinitialiser les votes pour le tour
@@ -223,20 +219,20 @@ const startVoting = (realImpostor) => {
   voteList.innerHTML = "";
   voteStatus.textContent = "Clique sur un joueur pour voter.";
   
-  let hasVoted = false; // Indique si le joueur a déjà voté
+  let hasVoted = false; // Empêche un vote multiple
 
-  // Créer la liste des joueurs (exclusion du votant lui-même)
+  // Créer la liste des joueurs à voter (excluant le votant)
   players.forEach(name => {
     if (name === currentPlayer) return;
     const li = document.createElement("li");
     li.textContent = name;
     li.addEventListener("click", async () => {
-      if (hasVoted) return; // Empêche un second vote
+      if (hasVoted) return;
       hasVoted = true;
       
-      // Appliquer une classe pour indiquer le vote sélectionné
+      // Indiquer visuellement que ce vote est sélectionné
       li.classList.add("selected");
-      // Désactiver visuellement les autres éléments
+      // Désactiver les autres options
       Array.from(voteList.children).forEach(child => {
         if (child !== li) child.classList.add("disabled");
       });
@@ -249,7 +245,7 @@ const startVoting = (realImpostor) => {
     voteList.appendChild(li);
   });
 
-  // Suivi des votes en temps réel
+  // Suivi en temps réel des votes
   const votesRef = firebase.database().ref(`rooms/${roomKey}/votes`);
   votesRef.on("value", async snapshot => {
     const votes = snapshot.val() || {};
@@ -273,13 +269,18 @@ const startVoting = (realImpostor) => {
       }
       const gameSnap = await firebase.database().ref(`rooms/${roomKey}/game`).get();
       const gameData = gameSnap.val();
-      const realImpostor = gameData.impostor;
-      await updateScores(votes, realImpostor);
+      const realImpostorFinal = gameData.impostor;
+      
+      // Seul le leader déclenche la transaction globale de mise à jour des scores
+      const leaderSnap = await firebase.database().ref(`rooms/${roomKey}/hostUid`).once('value');
+      if (leaderSnap.val() === currentUid) {
+        await updateScores(votes, realImpostorFinal);
+      }
       voteResult.innerHTML = `
         <p><strong>🕵️ L’imposteur désigné :</strong> ${mostVoted} (${maxVotes} votes)</p>
-        <p><strong>🎯 Le vrai imposteur était :</strong> ${realImpostor}</p>
+        <p><strong>🎯 Le vrai imposteur était :</strong> ${realImpostorFinal}</p>
       `;
-      updateScoreboard();
+      // On met à jour le scoreboard via le listener global (voir ci-dessous)
       showReplayOption();
     }
   });
@@ -289,34 +290,29 @@ const startVoting = (realImpostor) => {
 const updateScores = async (votes, realImpostor) => {
   const scoresRef = firebase.database().ref(`rooms/${roomKey}/scores`);
   
-  // Récupérer la liste complète des joueurs pour obtenir leurs noms réels
+  // Récupération de la liste complète des joueurs pour leurs noms
   const playersSnap = await firebase.database().ref(`rooms/${roomKey}/players`).once('value');
   const playersMapping = playersSnap.val() || {};
 
-  // Mise à jour globale des scores dans une transaction unique
+  // Transaction unique sur le nœud "scores"
   await scoresRef.transaction((currentScores) => {
-    // Initialiser l'objet scores s'il est nul
     if (currentScores === null) {
       currentScores = {};
     }
-    
-    // Pour chaque vote, mettre à jour le score du joueur votant (ajouter 1 si le vote est correct)
+    // Pour chaque vote, ajouter 1 point si le vote est correct
     for (const uid in votes) {
       const voteName = votes[uid];
-      // Si aucune entrée n'existe pour ce joueur, la créer avec 0 point par défaut
       if (!currentScores[uid]) {
         currentScores[uid] = {
           name: playersMapping[uid] ? playersMapping[uid].name : "Inconnu",
           points: 0
         };
       }
-      // Ajout de 1 point si le vote est correct
       if (voteName === realImpostor) {
         currentScores[uid].points += 1;
       }
     }
-    
-    // Appliquer le bonus pour l’imposteur : +1 point pour chaque vote erroné (en dehors de lui-même)
+    // Appliquer le bonus pour l’imposteur : +1 point pour chaque vote erroné
     let impostorUid = null;
     for (const uid in playersMapping) {
       if (playersMapping[uid].name === realImpostor) {
@@ -331,7 +327,6 @@ const updateScores = async (votes, realImpostor) => {
           bonusPoints++;
         }
       }
-      // Si aucune entrée n'existe pour l'imposteur, l'initialiser avec 0 point
       if (!currentScores[impostorUid]) {
         currentScores[impostorUid] = {
           name: playersMapping[impostorUid] ? playersMapping[impostorUid].name : realImpostor,
@@ -343,21 +338,21 @@ const updateScores = async (votes, realImpostor) => {
     return currentScores;
   });
   
-  // Marquer les scores comme traités pour cette manche afin d'éviter un nouveau traitement lors d'une actualisation
+  // Marquer la manche comme traitée pour éviter une re-calcul sur rafraîchissement
   await firebase.database().ref(`rooms/${roomKey}/game`).update({ scoresProcessed: true });
 };
 
 /* ========= MISE À JOUR DU TABLEAU DES SCORES ========= */
 const updateScoreboard = async () => {
-  // Récupérer la liste complète des joueurs pour s'assurer que tous apparaissent, même avec un score par défaut de 0
+  // Récupérer la liste complète des joueurs
   const playersSnap = await firebase.database().ref(`rooms/${roomKey}/players`).once('value');
   const playersData = playersSnap.val() || {};
 
-  // Récupérer les scores enregistrés
+  // Récupérer les scores depuis Firebase
   const scoresSnap = await firebase.database().ref(`rooms/${roomKey}/scores`).once('value');
   const scoresData = scoresSnap.val() || {};
 
-  // Constituer un tableau avec tous les joueurs et leur score (0 par défaut)
+  // Créer un tableau intégrant tous les joueurs avec score par défaut à 0 si non défini
   const scoreArray = Object.entries(playersData).map(([uid, data]) => ({
     name: data.name,
     points: scoresData[uid] && scoresData[uid].points ? scoresData[uid].points : 0
@@ -366,7 +361,6 @@ const updateScoreboard = async () => {
   // Tri par points décroissants
   scoreArray.sort((a, b) => b.points - a.points);
 
-  // Mettre à jour l'affichage du tableau de score
   scoreBoard.innerHTML = "";
   scoreArray.forEach(s => {
     const li = document.createElement("li");
@@ -376,6 +370,13 @@ const updateScoreboard = async () => {
   
   scoreSection.style.display = "block";
 };
+
+/* ========= ÉCOUTE EN TEMPS RÉEL DES SCORES ========= */
+// Mise à jour globale du tableau de scores dès qu'une modification intervient sur "scores"
+firebase.database().ref(`rooms/${roomKey}/scores`)
+  .on('value', snapshot => {
+    updateScoreboard();
+});
 
 /* ========= ÉCOUTE DES MODIFICATIONS DE L'ÉTAT DU JEU ========= */
 const listenToGame = () => {
@@ -399,7 +400,7 @@ const listenToGame = () => {
 
 /* ========= OPTION REJOUER ========= */
 const showReplayOption = async () => {
-  // Seul le leader (celui dont l'UID correspond à hostUid) voit les options de rejouer
+  // Seul le leader voit l'option pour rejouer
   const leaderSnap = await firebase.database().ref(`rooms/${roomKey}/hostUid`).once('value');
   const isUserLeader = leaderSnap.val() === currentUid;
   
