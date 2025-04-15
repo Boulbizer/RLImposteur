@@ -1,220 +1,176 @@
+/* ===== Version Pro améliorée ===== */
 @import url('https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700&display=swap');
 
-/* ===== Global ===== */
 body {
   margin: 0;
   padding: 0;
   font-family: 'Titillium Web', sans-serif;
-  background: radial-gradient(ellipse at center, #0d0d0d 0%, #121212 100%);
-  color: #f0f0f0;
+  background: radial-gradient(ellipse at center, #0b0b0b 0%, #111 100%);
+  color: #f5f5f5;
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
+  transition: background 0.4s ease;
 }
 
-/* ===== Conteneur principal ===== */
+body.pro-mode {
+  background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+}
+
 .container {
-  background-color: rgba(20, 20, 20, 0.95);
-  border: 1px solid #333;
-  border-radius: 16px;
-  padding: 40px 30px;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
-  max-width: 480px;
+  background-color: rgba(25, 25, 25, 0.95);
+  border-radius: 18px;
+  padding: 45px 35px;
+  box-shadow: 0 0 25px rgba(0, 0, 0, 0.5);
+  max-width: 500px;
   width: 90%;
   text-align: center;
 }
 
-/* ===== Titres et textes ===== */
 .title {
-  font-size: 30px;
-  margin-bottom: 10px;
+  font-size: 34px;
+  margin-bottom: 15px;
   font-weight: 700;
   color: #00bfff;
+  text-shadow: 0 0 8px #0099cc;
 }
 
 .room-id {
-  font-size: 14px;
-  color: #888;
+  font-size: 15px;
+  color: #bbb;
   margin-bottom: 20px;
 }
 
 .small-note {
-  font-size: 13px;
+  font-size: 14px;
   color: #aaa;
-  margin-top: 5px;
+  margin-top: 6px;
 }
 
-/* ===== Inputs & Boutons ===== */
 input[type="text"] {
-  padding: 12px 15px;
+  padding: 14px 16px;
   width: 80%;
   margin-bottom: 20px;
-  border-radius: 8px;
+  border-radius: 10px;
   border: none;
-  background-color: #2a2a2a;
+  background-color: #2e2e2e;
   color: white;
-  font-size: 16px;
+  font-size: 17px;
   text-align: center;
   outline: none;
-  transition: 0.2s ease;
+  transition: background 0.2s ease;
 }
 
 input[type="text"]:focus {
-  background-color: #333;
+  background-color: #3a3a3a;
 }
 
 button {
-  padding: 12px 20px;
+  padding: 14px 22px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 16px;
   font-weight: 600;
   color: white;
   cursor: pointer;
-  background-color: #007acc;
-  transition: 0.2s ease;
+  background: linear-gradient(145deg, #007acc, #005fa3);
+  transition: all 0.2s ease;
   margin-top: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
 button:hover {
-  background-color: #005fa3;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
 }
 
-/* ===== Liste des joueurs et vote ===== */
-#player-list, #vote-list {
-  list-style: none;
-  padding: 0;
-  margin: 15px 0;
-}
-
-#player-list li {
-  margin: 6px 0;
-  padding: 8px 12px;
-  border-radius: 6px;
-  background-color: #1e1e1e;
-  color: #00bfff;
-  font-weight: 500;
-  text-align: left;
-}
-
-#vote-list li {
-  margin: 6px 0;
-  padding: 10px 16px;
-  background-color: #1f1f1f;
+#player-list li, #vote-list li {
+  background: #1f1f1f;
   border-radius: 8px;
-  cursor: pointer;
-  transition: 0.2s ease;
+  margin: 6px 0;
+  padding: 10px 14px;
   font-weight: 600;
 }
 
-/* Classes pour indiquer le vote */
 #vote-list li.selected {
   background-color: #00c282;
   color: #fff;
-  font-weight: bold;
-}
-#vote-list li.disabled {
-  opacity: 0.5;
-  pointer-events: none;
+  box-shadow: 0 0 8px #00c282;
 }
 
 #vote-list li:hover {
-  background-color: #292929;
+  background-color: #2a2a2a;
 }
 
-/* ===== Affichage du rôle ===== */
 #role-display {
   margin-top: 20px;
-  font-size: 18px;
-  padding: 20px;
-  border-radius: 12px;
-  background-color: rgba(255, 255, 255, 0.05);
+  font-size: 20px;
+  padding: 24px;
+  border-radius: 14px;
+  background-color: rgba(255, 255, 255, 0.04);
   border: 1px solid #444;
-  display: none;
   opacity: 0;
-  transform: scale(0.95);
-  transition: all 0.5s ease;
+  transform: rotateY(90deg) scale(0.95);
+  transition: all 0.6s ease-in-out;
+  display: none;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
 }
 
 #role-display.show {
   display: block;
   opacity: 1;
-  transform: scale(1);
+  transform: rotateY(0deg) scale(1);
 }
 
 #role-badge {
   display: inline-block;
-  padding: 6px 12px;
+  padding: 8px 16px;
   margin-bottom: 12px;
   font-weight: 700;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 16px;
   color: white;
+  text-shadow: 0 0 5px rgba(0,0,0,0.3);
 }
 
 #role-badge.impostor {
   background-color: #ff4444;
+  box-shadow: 0 0 12px #ff4444;
 }
 
 #role-badge.citizen {
   background-color: #00c282;
+  box-shadow: 0 0 12px #00c282;
 }
 
-/* ===== Bouton rejouer ===== */
 #replay-btn {
   background-color: #ff7b00;
+  box-shadow: 0 0 10px #ff7b00;
 }
 
 #replay-btn:hover {
   background-color: #cc6300;
 }
 
-/* ===== Bouton copier lien ===== */
 #copy-room-btn {
   background-color: #00aa7f;
+  box-shadow: 0 0 10px #00aa7f;
 }
 
 #copy-room-btn:hover {
   background-color: #008e6b;
 }
 
-/* ===== Animation pour l'affichage du rôle ===== */
-@keyframes revealFadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95) translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-#role-display.animate {
-  animation: revealFadeIn 0.6s ease-out forwards;
-}
-
-/* ===== Tableaux des scores ===== */
-#score-board {
-  list-style: none;
-  padding: 0;
-  margin: 15px auto;
-  max-width: 400px;
-  text-align: left;
-  border-top: 1px solid #444;
-}
-
 #score-board li {
   padding: 10px 15px;
   border-bottom: 1px solid #444;
-  background-color: #1e1e1e;
+  background-color: #1c1c1c;
   color: #00bfff;
   font-weight: 500;
   font-size: 16px;
-  margin: 0;
 }
 
 #score-board li:nth-child(odd) {
-  background-color: #1a1a1a;
+  background-color: #181818;
 }
