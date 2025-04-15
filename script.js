@@ -440,3 +440,24 @@ firebase.auth().onAuthStateChanged(user => {
     }
   }
 });
+
+function afficherRole(role) {
+  const container = document.getElementById('role-display');
+  container.innerHTML = ''; // reset
+
+  const div = document.createElement('div');
+  div.className = `role-card ${role === 'impostor' ? 'impostor' : 'citizen'}`;
+  div.innerHTML = `
+    <div class="badge">${role === 'impostor' ? '🔥 Imposteur' : '🚀 Joueur loyal'}</div>
+    <div class="icon">${role === 'impostor' ? '😈' : '🧑‍🚀'}</div>
+    <div class="role-name">${role === 'impostor' ? 'Saboteur Nitro' : 'Citoyen Rocket'}</div>
+    <div class="description">${
+      role === 'impostor'
+        ? 'Sabote secrètement l’équipe… sans te faire repérer.'
+        : 'Joue normalement, détecte l’imposteur, marque des buts !'
+    }</div>
+  `;
+
+  container.appendChild(div);
+  container.classList.add('show');
+}
