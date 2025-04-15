@@ -276,7 +276,17 @@ const startVoting = (realImpostor) => {
 };
 
 /* ========= MISE À JOUR DES SCORES ========= */
+// Bloc corrigé pour updateScores avec vérification d'un flag de traitement
 const updateScores = async (votes, realImpostor) => {
+  const gameRef = firebase.database().ref(`rooms/${roomKey}/game`);
+  const gameSnap = await gameRef.once("value");
+  const gameData = gameSnap.val() || {};
+
+  // Si les scores ont déjà été traités pour cette manche, ne rien faire.
+  if (gameData.scoresProcessed) {
+    return;
+  }
+
   const scoresRef = firebase.database().ref(`rooms/${roomKey}/scores`);
   // Lecture de la liste complète des joueurs pour obtenir leurs noms réels
   const playersSnap = await firebase.database().ref(`rooms/${roomKey}/players`).once('value');
@@ -304,7 +314,6 @@ const updateScores = async (votes, realImpostor) => {
   }
 
   // 2. Appliquer le bonus pour l’imposteur : +1 point par vote erroné (hors vote de l’imposteur lui-même)
-  // Identifier l'UID de l’imposteur à partir de la liste des joueurs
   let impostorUid = null;
   for (const uid in playersMapping) {
     if (playersMapping[uid].name === realImpostor) {
@@ -334,6 +343,9 @@ const updateScores = async (votes, realImpostor) => {
       }
     });
   }
+  
+  // Marquer les scores comme traités pour cette manche afin d'éviter un nouveau traitement lors d'une actualisation
+  await gameRef.update({ scoresProcessed: true });
 };
 
 /* ========= MISE À JOUR DU TABLEAU DES SCORES ========= */
