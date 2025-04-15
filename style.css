@@ -170,13 +170,24 @@ button:hover {
   transform: rotateY(180deg);
 }
 
-/* Style pour la placeholder et le contenu du rôle */
+/* Placeholder et style pour la révélation des rôles */
 .role-placeholder {
   font-size: 48px;
   font-weight: bold;
 }
 
 .role-text {
+  font-size: 36px;
+  font-weight: bold;
+}
+
+/* Placeholder et style pour le résultat du vote */
+.vote-placeholder {
+  font-size: 48px;
+  font-weight: bold;
+}
+
+.vote-text {
   font-size: 36px;
   font-weight: bold;
 }
@@ -198,7 +209,7 @@ button:hover {
   background-color: #008e6b;
 }
 
-/* ===== Animation reveal pour le rôle ===== */
+/* ===== Animation reveal pour le rôle et le vote ===== */
 @keyframes revealFadeIn {
   from {
     opacity: 0;
@@ -210,6 +221,7 @@ button:hover {
   }
 }
 
-#role-display.animate {
+#role-display.animate,
+#vote-outcome.animate {
   animation: revealFadeIn 0.6s ease-out forwards;
 }
