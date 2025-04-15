@@ -286,81 +286,70 @@ const startVoting = (realImpostor) => {
 };
 
 /* ========= MISE À JOUR DES SCORES ========= */
-// Bloc corrigé pour updateScores avec vérification d'un flag de traitement
 const updateScores = async (votes, realImpostor) => {
-  const gameRef = firebase.database().ref(`rooms/${roomKey}/game`);
-  const gameSnap = await gameRef.once("value");
-  const gameData = gameSnap.val() || {};
-
-  // Si les scores ont déjà été traités pour cette manche, ne rien faire.
-  if (gameData.scoresProcessed) {
-    return;
-  }
-
   const scoresRef = firebase.database().ref(`rooms/${roomKey}/scores`);
-  // Lecture de la liste complète des joueurs pour obtenir leurs noms réels
+  
+  // Récupérer la liste complète des joueurs pour obtenir leurs noms réels
   const playersSnap = await firebase.database().ref(`rooms/${roomKey}/players`).once('value');
   const playersMapping = playersSnap.val() || {};
 
-  // 1. Pour chaque vote, mettre à jour le score du joueur votant (1 point s'il a voté correctement)
-  for (const uid in votes) {
-    const voteName = votes[uid];
-    const playerScoreRef = firebase.database().ref(`rooms/${roomKey}/scores/${uid}`);
-    await playerScoreRef.transaction(currentData => {
-      const playerName = playersMapping[uid] ? playersMapping[uid].name : "Inconnu";
-      if (currentData === null) {
-        return {
-          name: playerName,
-          points: (voteName === realImpostor ? 1 : 0)
-        };
-      } else {
-        const additional = (voteName === realImpostor ? 1 : 0);
-        return {
-          ...currentData,
-          points: currentData.points + additional
+  // Mise à jour globale des scores dans une transaction unique
+  await scoresRef.transaction((currentScores) => {
+    // Initialiser l'objet scores s'il est nul
+    if (currentScores === null) {
+      currentScores = {};
+    }
+    
+    // Pour chaque vote, mettre à jour le score du joueur votant (ajouter 1 si le vote est correct)
+    for (const uid in votes) {
+      const voteName = votes[uid];
+      // Si aucune entrée n'existe pour ce joueur, la créer avec 0 point par défaut
+      if (!currentScores[uid]) {
+        currentScores[uid] = {
+          name: playersMapping[uid] ? playersMapping[uid].name : "Inconnu",
+          points: 0
         };
       }
-    });
-  }
-
-  // 2. Appliquer le bonus pour l’imposteur : +1 point par vote erroné (hors vote de l’imposteur lui-même)
-  let impostorUid = null;
-  for (const uid in playersMapping) {
-    if (playersMapping[uid].name === realImpostor) {
-      impostorUid = uid;
-      break;
+      // Ajout de 1 point si le vote est correct
+      if (voteName === realImpostor) {
+        currentScores[uid].points += 1;
+      }
     }
-  }
-
-  if (impostorUid) {
-    let bonusPoints = 0;
-    for (const [voterUid, votedName] of Object.entries(votes)) {
-      if (votedName !== realImpostor && voterUid !== impostorUid) bonusPoints++;
+    
+    // Appliquer le bonus pour l’imposteur : +1 point pour chaque vote erroné (en dehors de lui-même)
+    let impostorUid = null;
+    for (const uid in playersMapping) {
+      if (playersMapping[uid].name === realImpostor) {
+        impostorUid = uid;
+        break;
+      }
     }
-    const impostorRef = firebase.database().ref(`rooms/${roomKey}/scores/${impostorUid}`);
-    await impostorRef.transaction(currentData => {
-      const impostorName = playersMapping[impostorUid] ? playersMapping[impostorUid].name : realImpostor;
-      if (currentData === null) {
-        return {
-          name: impostorName,
-          points: bonusPoints
-        };
-      } else {
-        return {
-          ...currentData,
-          points: currentData.points + bonusPoints
+    if (impostorUid) {
+      let bonusPoints = 0;
+      for (const [voterUid, votedName] of Object.entries(votes)) {
+        if (votedName !== realImpostor && voterUid !== impostorUid) {
+          bonusPoints++;
+        }
+      }
+      // Si aucune entrée n'existe pour l'imposteur, l'initialiser avec 0 point
+      if (!currentScores[impostorUid]) {
+        currentScores[impostorUid] = {
+          name: playersMapping[impostorUid] ? playersMapping[impostorUid].name : realImpostor,
+          points: 0
         };
       }
-    });
-  }
+      currentScores[impostorUid].points += bonusPoints;
+    }
+    return currentScores;
+  });
   
   // Marquer les scores comme traités pour cette manche afin d'éviter un nouveau traitement lors d'une actualisation
-  await gameRef.update({ scoresProcessed: true });
+  await firebase.database().ref(`rooms/${roomKey}/game`).update({ scoresProcessed: true });
 };
 
 /* ========= MISE À JOUR DU TABLEAU DES SCORES ========= */
 const updateScoreboard = async () => {
-  // Récupérer la liste complète des joueurs pour s'assurer que tous apparaissent avec un score (même 0)
+  // Récupérer la liste complète des joueurs pour s'assurer que tous apparaissent, même avec un score par défaut de 0
   const playersSnap = await firebase.database().ref(`rooms/${roomKey}/players`).once('value');
   const playersData = playersSnap.val() || {};
 
@@ -369,16 +358,15 @@ const updateScoreboard = async () => {
   const scoresData = scoresSnap.val() || {};
 
   // Constituer un tableau avec tous les joueurs et leur score (0 par défaut)
-  const scoreArray = Object.entries(playersData).map(([uid, data]) => {
-    return {
-      name: data.name,
-      points: (scoresData[uid] && scoresData[uid].points) ? scoresData[uid].points : 0
-    };
-  });
+  const scoreArray = Object.entries(playersData).map(([uid, data]) => ({
+    name: data.name,
+    points: scoresData[uid] && scoresData[uid].points ? scoresData[uid].points : 0
+  }));
 
   // Tri par points décroissants
   scoreArray.sort((a, b) => b.points - a.points);
 
+  // Mettre à jour l'affichage du tableau de score
   scoreBoard.innerHTML = "";
   scoreArray.forEach(s => {
     const li = document.createElement("li");
