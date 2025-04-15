@@ -81,46 +81,49 @@ button:hover {
   background-color: #005fa3;
 }
 
-/* ===== Listes ===== */
-#player-list, #vote-list, #score-board {
+/* ===== Liste des joueurs et vote ===== */
+#player-list, #vote-list {
   list-style: none;
   padding: 0;
   margin: 15px 0;
 }
 
-#player-list li, #vote-list li, #score-board li {
+#player-list li {
   margin: 6px 0;
   padding: 8px 12px;
   border-radius: 6px;
-}
-
-/* Style spécifique pour joueurs */
-#player-list li {
   background-color: #1e1e1e;
   color: #00bfff;
   font-weight: 500;
   text-align: left;
 }
 
-/* Style pour votes */
 #vote-list li {
+  margin: 6px 0;
+  padding: 10px 16px;
   background-color: #1f1f1f;
+  border-radius: 8px;
   cursor: pointer;
   transition: 0.2s ease;
   font-weight: 600;
+}
+
+/* Classes pour indiquer le vote */
+#vote-list li.selected {
+  background-color: #00c282;
+  color: #fff;
+  font-weight: bold;
+}
+#vote-list li.disabled {
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 #vote-list li:hover {
   background-color: #292929;
 }
 
-#vote-list li.voted {
-  background-color: #00c282;
-  color: #fff;
-  cursor: default;
-}
-
-/* ===== Section rôle ===== */
+/* ===== Affichage du rôle ===== */
 #role-display {
   margin-top: 20px;
   font-size: 18px;
@@ -158,7 +161,7 @@ button:hover {
   background-color: #00c282;
 }
 
-/* Bouton rejouer */
+/* ===== Bouton rejouer ===== */
 #replay-btn {
   background-color: #ff7b00;
 }
@@ -167,7 +170,7 @@ button:hover {
   background-color: #cc6300;
 }
 
-/* Bouton copier lien */
+/* ===== Bouton copier lien ===== */
 #copy-room-btn {
   background-color: #00aa7f;
 }
@@ -176,7 +179,7 @@ button:hover {
   background-color: #008e6b;
 }
 
-/* Animation pour l'affichage du rôle */
+/* ===== Animation pour l'affichage du rôle ===== */
 @keyframes revealFadeIn {
   from {
     opacity: 0;
@@ -190,4 +193,28 @@ button:hover {
 
 #role-display.animate {
   animation: revealFadeIn 0.6s ease-out forwards;
+}
+
+/* ===== Tableaux des scores ===== */
+#score-board {
+  list-style: none;
+  padding: 0;
+  margin: 15px auto;
+  max-width: 400px;
+  text-align: left;
+  border-top: 1px solid #444;
+}
+
+#score-board li {
+  padding: 10px 15px;
+  border-bottom: 1px solid #444;
+  background-color: #1e1e1e;
+  color: #00bfff;
+  font-weight: 500;
+  font-size: 16px;
+  margin: 0;
+}
+
+#score-board li:nth-child(odd) {
+  background-color: #1a1a1a;
 }
