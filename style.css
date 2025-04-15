@@ -1,4 +1,4 @@
-/* ===== Version Pro améliorée ===== */
+/* ===== Version Pro améliorée avec Carte de Rôle Fun ===== */
 @import url('https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700&display=swap');
 
 body {
@@ -12,10 +12,6 @@ body {
   align-items: center;
   min-height: 100vh;
   transition: background 0.4s ease;
-}
-
-body.pro-mode {
-  background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
 }
 
 .container {
@@ -85,92 +81,93 @@ button:hover {
   box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
 }
 
-#player-list li, #vote-list li {
-  background: #1f1f1f;
-  border-radius: 8px;
-  margin: 6px 0;
-  padding: 10px 14px;
-  font-weight: 600;
-}
-
-#vote-list li.selected {
-  background-color: #00c282;
-  color: #fff;
-  box-shadow: 0 0 8px #00c282;
-}
-
-#vote-list li:hover {
-  background-color: #2a2a2a;
-}
-
+/* Carte de rôle animée */
 #role-display {
+  perspective: 1000px;
+  display: flex;
+  justify-content: center;
   margin-top: 20px;
-  font-size: 20px;
-  padding: 24px;
-  border-radius: 14px;
-  background-color: rgba(255, 255, 255, 0.04);
-  border: 1px solid #444;
   opacity: 0;
-  transform: rotateY(90deg) scale(0.95);
-  transition: all 0.6s ease-in-out;
-  display: none;
-  box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
+  transition: opacity 0.6s ease;
 }
 
 #role-display.show {
-  display: block;
   opacity: 1;
-  transform: rotateY(0deg) scale(1);
 }
 
-#role-badge {
-  display: inline-block;
-  padding: 8px 16px;
-  margin-bottom: 12px;
+.role-card {
+  width: 260px;
+  height: 360px;
+  background: linear-gradient(135deg, #1a1a1a, #2c2c2c);
+  border-radius: 20px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+  transform-style: preserve-3d;
+  transform: rotateY(180deg);
+  animation: flipIn 0.8s ease forwards;
+  position: relative;
+  overflow: hidden;
+}
+
+.role-card .badge {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 18px;
+  padding: 10px 16px;
+  border-radius: 12px;
   font-weight: 700;
-  border-radius: 8px;
-  font-size: 16px;
   color: white;
-  text-shadow: 0 0 5px rgba(0,0,0,0.3);
+  text-shadow: 0 0 4px rgba(0,0,0,0.5);
 }
 
-#role-badge.impostor {
-  background-color: #ff4444;
-  box-shadow: 0 0 12px #ff4444;
+.role-card .icon {
+  font-size: 80px;
+  margin-top: 80px;
 }
 
-#role-badge.citizen {
-  background-color: #00c282;
-  box-shadow: 0 0 12px #00c282;
+.role-card .role-name {
+  margin-top: 20px;
+  font-size: 24px;
+  font-weight: bold;
 }
 
-#replay-btn {
-  background-color: #ff7b00;
-  box-shadow: 0 0 10px #ff7b00;
+.role-card .description {
+  font-size: 14px;
+  padding: 10px 20px;
+  margin-top: 15px;
+  color: #ddd;
 }
 
-#replay-btn:hover {
-  background-color: #cc6300;
+/* Styles pour rôles */
+.role-card.impostor {
+  background: linear-gradient(135deg, #4e0000, #9e0000);
+  box-shadow: 0 0 20px rgba(255, 0, 0, 0.4);
 }
 
-#copy-room-btn {
-  background-color: #00aa7f;
-  box-shadow: 0 0 10px #00aa7f;
+.role-card.impostor .badge {
+  background: #ff4444;
+  box-shadow: 0 0 10px #ff4444;
 }
 
-#copy-room-btn:hover {
-  background-color: #008e6b;
+.role-card.citizen {
+  background: linear-gradient(135deg, #004d40, #00c282);
+  box-shadow: 0 0 20px rgba(0, 255, 180, 0.4);
 }
 
-#score-board li {
-  padding: 10px 15px;
-  border-bottom: 1px solid #444;
-  background-color: #1c1c1c;
-  color: #00bfff;
-  font-weight: 500;
-  font-size: 16px;
+.role-card.citizen .badge {
+  background: #00c282;
+  box-shadow: 0 0 10px #00c282;
 }
 
-#score-board li:nth-child(odd) {
-  background-color: #181818;
+/* Animation flip */
+@keyframes flipIn {
+  0% {
+    transform: rotateY(180deg) scale(0.8);
+    opacity: 0;
+  }
+  100% {
+    transform: rotateY(0deg) scale(1);
+    opacity: 1;
+  }
 }
