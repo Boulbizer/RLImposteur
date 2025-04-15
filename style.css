@@ -1,4 +1,4 @@
-/* ===== Style Flat Rocket League - Moderne & Épuré ===== */
+/* ===== Style Flat Rocket League - Moderne & Épuré avec SVG décoratif ===== */
 @import url('https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700&display=swap');
 
 body {
@@ -11,6 +11,22 @@ body {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+/* SVG décoratif positionné en fond */
+body::before {
+  content: "";
+  position: absolute;
+  top: -100px;
+  left: -100px;
+  width: 150%;
+  height: 150%;
+  background-image: url("data:image/svg+xml,%3Csvg width='1000' height='1000' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='500' cy='500' r='480' fill='none' stroke='%23ff6600' stroke-width='20' stroke-dasharray='40 40' opacity='0.04' /%3E%3Cpath d='M 0 600 Q 500 300 1000 600 T 2000 600' stroke='%2300c282' stroke-width='40' fill='none' opacity='0.03' /%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-size: cover;
+  z-index: 0;
 }
 
 .container {
@@ -20,6 +36,8 @@ body {
   max-width: 520px;
   width: 90%;
   text-align: center;
+  position: relative;
+  z-index: 1;
 }
 
 .title {
