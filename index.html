@@ -9,41 +9,38 @@
   <body>
     <div class="container">
       <h1 class="title">🎮 Imposteur Rocket League 🚗</h1>
-      <p id="room-name" class="room-id"></p>
-      <p id="pseudo-label" class="small-note"></p>
 
-      <!-- Section création de salle -->
+      <!-- Création et lien de salle -->
       <div id="create-room-section">
         <button id="create-room-btn">🎲 Créer une salle aléatoire</button>
         <p class="small-note">Ou partage un lien comme <code>?salle=match-potes</code></p>
       </div>
 
-      <!-- Section copie du lien de la salle -->
       <div id="copy-room-section" style="display: none;">
         <button id="copy-room-btn">📋 Copier le lien de la salle</button>
         <p id="copy-feedback" class="small-note"></p>
       </div>
 
-      <!-- Section pour rejoindre la partie -->
+      <!-- Connexion joueur -->
       <div id="join-section" style="display: none;">
         <input type="text" id="username" placeholder="Ton pseudo en jeu" />
         <p id="pseudo-error" class="small-note" style="color: red;"></p>
         <button id="join-btn">Rejoindre le match</button>
       </div>
 
-      <!-- Section joueurs -->
+      <!-- Joueurs -->
       <div id="lobby-section" style="display: none;">
         <h2>🚦 Joueurs en attente :</h2>
         <ul id="player-list"></ul>
       </div>
 
-      <!-- Section rôle -->
+      <!-- Rôle -->
       <div id="role-section" style="display: none;">
         <h2>🎯 Ton rôle dans le match</h2>
         <div id="role-display"></div>
       </div>
 
-      <!-- Section vote -->
+      <!-- Vote -->
       <div id="vote-section" style="display: none;">
         <h2>🗳️ Vote : Qui est l’imposteur ?</h2>
         <ul id="vote-list"></ul>
@@ -51,13 +48,13 @@
         <div id="vote-result" style="margin-top: 20px;"></div>
       </div>
 
-      <!-- Section score -->
+      <!-- Score -->
       <div id="score-section" style="display: none;">
         <h3>🏆 Scores</h3>
         <ul id="score-board"></ul>
       </div>
 
-      <!-- Section action (boutons) -->
+      <!-- Actions -->
       <div id="replay-section" style="display: none;">
         <button id="replay-btn">🔁 Rejouer une partie</button>
         <p id="replay-info" class="small-note"></p>
