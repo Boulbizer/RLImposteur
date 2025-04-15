@@ -42,10 +42,20 @@
         <button id="start-btn" style="display: none;">Lancer la partie</button>
       </div>
 
-      <!-- Section affichage du rôle -->
+      <!-- Section de révélation du rôle avec effet flip card -->
       <div id="role-section" style="display: none;">
-        <h2>🎯 Ton rôle dans le match</h2>
-        <p id="role-display"></p>
+        <div class="flip-card">
+          <div class="flip-card-inner" id="role-card">
+            <div class="flip-card-front">
+              <!-- Face avant (rôle caché) -->
+              <div class="role-placeholder">?</div>
+            </div>
+            <div class="flip-card-back">
+              <!-- Face arrière (rôle révélé) -->
+              <div id="role-content"></div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Section vote -->
