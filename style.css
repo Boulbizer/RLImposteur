@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700&display=swap');
 
-/* ===== GLOBAL ===== */
+/* ===== Global ===== */
 body {
   margin: 0;
   padding: 0;
@@ -13,19 +13,19 @@ body {
   min-height: 100vh;
 }
 
-/* ===== CONTAINER ===== */
+/* ===== Conteneur principal ===== */
 .container {
-  background-color: rgba(20,20,20,0.95);
+  background-color: rgba(20, 20, 20, 0.95);
   border: 1px solid #333;
   border-radius: 16px;
   padding: 40px 30px;
-  box-shadow: 0 0 20px rgba(0,0,0,0.4);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
   max-width: 480px;
   width: 90%;
   text-align: center;
 }
 
-/* ===== TEXTES & TITRES ===== */
+/* ===== Titres et textes ===== */
 .title {
   font-size: 30px;
   margin-bottom: 10px;
@@ -33,13 +33,19 @@ body {
   color: #00bfff;
 }
 
-.room-id, .small-note {
+.room-id {
+  font-size: 14px;
+  color: #888;
+  margin-bottom: 20px;
+}
+
+.small-note {
   font-size: 13px;
   color: #aaa;
   margin-top: 5px;
 }
 
-/* ===== INPUTS & BUTTONS ===== */
+/* ===== Inputs & Boutons ===== */
 input[type="text"] {
   padding: 12px 15px;
   width: 80%;
@@ -47,11 +53,11 @@ input[type="text"] {
   border-radius: 8px;
   border: none;
   background-color: #2a2a2a;
-  color: #fff;
+  color: white;
   font-size: 16px;
   text-align: center;
   outline: none;
-  transition: background 0.2s ease;
+  transition: 0.2s ease;
 }
 
 input[type="text"]:focus {
@@ -64,10 +70,10 @@ button {
   border-radius: 8px;
   font-size: 16px;
   font-weight: 600;
-  color: #fff;
+  color: white;
   cursor: pointer;
   background-color: #007acc;
-  transition: background 0.2s ease;
+  transition: 0.2s ease;
   margin-top: 10px;
 }
 
@@ -75,7 +81,7 @@ button:hover {
   background-color: #005fa3;
 }
 
-/* ===== LISTES (joueurs, votes) ===== */
+/* ===== Liste des joueurs et vote ===== */
 #player-list, #vote-list {
   list-style: none;
   padding: 0;
@@ -98,15 +104,11 @@ button:hover {
   background-color: #1f1f1f;
   border-radius: 8px;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: 0.2s ease;
   font-weight: 600;
 }
 
-#vote-list li:hover {
-  background-color: #292929;
-}
-
-/* Classes pour votes */
+/* Classes pour indiquer le vote */
 #vote-list li.selected {
   background-color: #00c282;
   color: #fff;
@@ -117,13 +119,17 @@ button:hover {
   pointer-events: none;
 }
 
-/* ===== AFFICHAGE DU RÔLE ===== */
+#vote-list li:hover {
+  background-color: #292929;
+}
+
+/* ===== Affichage du rôle ===== */
 #role-display {
   margin-top: 20px;
   font-size: 18px;
   padding: 20px;
   border-radius: 12px;
-  background-color: rgba(255,255,255,0.05);
+  background-color: rgba(255, 255, 255, 0.05);
   border: 1px solid #444;
   display: none;
   opacity: 0;
@@ -144,7 +150,7 @@ button:hover {
   font-weight: 700;
   border-radius: 6px;
   font-size: 16px;
-  color: #fff;
+  color: white;
 }
 
 #role-badge.impostor {
@@ -155,7 +161,41 @@ button:hover {
   background-color: #00c282;
 }
 
-/* ===== SCOREBOARD ===== */
+/* ===== Bouton rejouer ===== */
+#replay-btn {
+  background-color: #ff7b00;
+}
+
+#replay-btn:hover {
+  background-color: #cc6300;
+}
+
+/* ===== Bouton copier lien ===== */
+#copy-room-btn {
+  background-color: #00aa7f;
+}
+
+#copy-room-btn:hover {
+  background-color: #008e6b;
+}
+
+/* ===== Animation pour l'affichage du rôle ===== */
+@keyframes revealFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+#role-display.animate {
+  animation: revealFadeIn 0.6s ease-out forwards;
+}
+
+/* ===== Tableaux des scores ===== */
 #score-board {
   list-style: none;
   padding: 0;
@@ -177,65 +217,4 @@ button:hover {
 
 #score-board li:nth-child(odd) {
   background-color: #1a1a1a;
-}
-
-/* ===== FLIP-CARD POUR LE RÉSULTAT ===== */
-.flip-card {
-  perspective: 1000px;
-  width: 100%;
-  max-width: 350px;
-  margin: 20px auto;
-}
-
-.flip-card-inner {
-  position: relative;
-  width: 100%;
-  transition: transform 0.8s ease-out;
-  transform-style: preserve-3d;
-}
-
-.flip-card.flipped .flip-card-inner {
-  transform: rotateY(180deg);
-}
-
-.flip-card-front,
-.flip-card-back {
-  position: absolute;
-  width: 100%;
-  backface-visibility: hidden;
-  border: 1px solid #444;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 0 15px rgba(0,0,0,0.2);
-}
-
-.flip-card-front {
-  background-color: #1e1e1e;
-  color: #fff;
-}
-
-.flip-card-back {
-  background-color: #292929;
-  color: #00bfff;
-  transform: rotateY(180deg);
-}
-
-/* ===== ANIMATION FLIP : Optionnel pour intensifier l'effet */
-.flip-card.flipped .flip-card-back p {
-  animation: dramaticReveal 0.8s ease-out forwards;
-}
-
-@keyframes dramaticReveal {
-  0% {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  50% {
-    opacity: 0.7;
-    transform: scale(1.05);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
 }
