@@ -275,16 +275,19 @@ const startVoting = (realImpostor) => {
 /* ========= MISE À JOUR DES SCORES ========= */
 const updateScores = async (votes, realImpostor) => {
   const scoresRef = firebase.database().ref(`rooms/${roomKey}/scores`);
+  // Lecture de la liste complète des joueurs afin d'obtenir leurs noms réels
+  const playersSnap = await firebase.database().ref(`rooms/${roomKey}/players`).once('value');
+  const playersMapping = playersSnap.val() || {};
 
   // 1. Pour chaque vote, mettre à jour le score du joueur votant (1 point s'il a voté correctement)
   for (const uid in votes) {
     const voteName = votes[uid];
     const playerScoreRef = firebase.database().ref(`rooms/${roomKey}/scores/${uid}`);
     await playerScoreRef.transaction(currentData => {
-      // Initialisation si aucune donnée n'existe pour ce joueur
+      const playerName = playersMapping[uid] ? playersMapping[uid].name : "Inconnu";
       if (currentData === null) {
         return {
-          name: "Joueur inconnu",
+          name: playerName,
           points: (voteName === realImpostor ? 1 : 0)
         };
       } else {
@@ -298,12 +301,10 @@ const updateScores = async (votes, realImpostor) => {
   }
 
   // 2. Appliquer le bonus pour l’imposteur : +1 point par vote erroné (hors vote de l’imposteur lui-même)
-  // On va chercher l'UID de l’imposteur en se basant sur le score dont le nom correspond à realImpostor.
-  const scoreSnapshot = await scoresRef.once("value");
-  const currentScores = scoreSnapshot.val() || {};
+  // Identification de l'UID de l’imposteur à partir de la liste des joueurs
   let impostorUid = null;
-  for (const uid in currentScores) {
-    if (currentScores[uid].name === realImpostor) {
+  for (const uid in playersMapping) {
+    if (playersMapping[uid].name === realImpostor) {
       impostorUid = uid;
       break;
     }
@@ -316,9 +317,10 @@ const updateScores = async (votes, realImpostor) => {
     }
     const impostorRef = firebase.database().ref(`rooms/${roomKey}/scores/${impostorUid}`);
     await impostorRef.transaction(currentData => {
+      const impostorName = playersMapping[impostorUid] ? playersMapping[impostorUid].name : realImpostor;
       if (currentData === null) {
         return {
-          name: realImpostor,
+          name: impostorName,
           points: bonusPoints
         };
       } else {
@@ -329,6 +331,24 @@ const updateScores = async (votes, realImpostor) => {
       }
     });
   }
+};
+
+/* ========= MISE À JOUR DU TABLEAU DES SCORES ========= */
+const updateScoreboard = async () => {
+  const scoresSnap = await firebase.database().ref(`rooms/${roomKey}/scores`).once('value');
+  const scores = scoresSnap.val() || {};
+  
+  // Conversion en tableau et tri par points décroissants
+  const scoreArray = Object.values(scores).sort((a, b) => b.points - a.points);
+  
+  scoreBoard.innerHTML = "";
+  scoreArray.forEach(s => {
+    const li = document.createElement("li");
+    li.textContent = `${s.name}: ${s.points} pts`;
+    scoreBoard.appendChild(li);
+  });
+  
+  scoreSection.style.display = "block";
 };
 
 /* ========= ÉCOUTE DES MODIFICATIONS DE L'ÉTAT DU JEU ========= */
