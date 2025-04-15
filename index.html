@@ -7,14 +7,14 @@
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <!-- Lien vers le fichier CSS -->
+  <!-- Fichier CSS -->
   <link rel="stylesheet" href="style.css">
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-database-compat.js"></script>
   <script>
-    // Configuration Firebase - Remplacez par votre configuration
+    // Configuration Firebase - Remplacez ces valeurs par celles de votre projet
     const firebaseConfig = {
       apiKey: "YOUR_API_KEY",
       authDomain: "YOUR_AUTH_DOMAIN",
@@ -31,7 +31,7 @@
   <div class="container">
     <h1 class="title">🎮 Imposteur Rocket League 🚗</h1>
     
-    <!-- Section affichage du nom de la salle -->
+    <!-- Affichage du nom de la salle -->
     <p id="room-name" class="room-id"></p>
     
     <!-- Section pour copier le lien de la salle -->
@@ -53,7 +53,10 @@
       <button id="join-btn">Rejoindre le match</button>
     </div>
     
-    <!-- Section du lobby avec la liste des joueurs -->
+    <!-- Optionnel : Label affichant le pseudo enregistré -->
+    <p id="pseudo-label" class="small-note" style="display: none;"></p>
+    
+    <!-- Section du lobby avec liste des joueurs -->
     <div id="lobby-section" style="display: none;">
       <h2>🚦 Joueurs en attente :</h2>
       <ul id="player-list"></ul>
