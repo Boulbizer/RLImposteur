@@ -64,6 +64,30 @@ const isLeader = async () => {
   return snap.val() === currentUid;
 };
 
+/* ========= ANIMATION FLIP CARD POUR LE RÉSULTAT DU VOTE ========= */
+/**
+ * Affiche le résultat du vote avec l'animation flip card dans la section vote.
+ * @param {string} result - "imposteur" si le verdict désigne l'imposteur, sinon "citoyen".
+ */
+function revealVoteResult(result) {
+  const voteCard = document.getElementById("vote-flip-card");
+  const voteOutcome = document.getElementById("vote-outcome");
+
+  if (result === "imposteur") {
+    voteOutcome.innerHTML =
+      '<div class="vote-text" style="color:#ff4444;">L\'IMPOSTEUR GAGNE !</div>';
+  } else {
+    voteOutcome.innerHTML =
+      '<div class="vote-text" style="color:#00c282;">LES CITOYENS GAGNENT !</div>';
+  }
+
+  voteCard.classList.remove("flipped");
+
+  setTimeout(() => {
+    voteCard.classList.add("flipped");
+  }, 500);
+}
+
 /* ========= INITIALISATION DE L'INTERFACE ========= */
 if (!roomKey) {
   // Pas de salle, on affiche uniquement la création de salle
@@ -235,7 +259,7 @@ const startVoting = (realImpostor) => {
       // Récupérer l'utilisateur courant
       const user = firebase.auth().currentUser;
       if (!user) return;
-      // Lancer la mise à jour Firebase sans attendre la fin de l'opération
+      // Mettre à jour Firebase sans attendre la fin de l'opération
       firebase.database().ref(`rooms/${roomKey}/votes/${user.uid}`).set(name)
         .catch(error => console.error("Erreur lors du vote:", error));
     });
@@ -272,10 +296,12 @@ const startVoting = (realImpostor) => {
       if (leaderSnap.val() === currentUid) {
         await updateScores(votes, realImpostorFinal);
       }
-      voteResult.innerHTML = `
-        <p><strong>🕵️ L’imposteur désigné :</strong> ${mostVoted} (${maxVotes} votes)</p>
-        <p><strong>🎯 Le vrai imposteur était :</strong> ${realImpostorFinal}</p>
-      `;
+      // Appeler la fonction d'animation flip card pour révéler le résultat du vote
+      if (mostVoted === realImpostorFinal) {
+        revealVoteResult("imposteur");
+      } else {
+        revealVoteResult("citoyen");
+      }
       showReplayOption();
     }
   });
@@ -367,7 +393,7 @@ const updateScoreboard = async () => {
 firebase.database().ref(`rooms/${roomKey}/scores`)
   .on('value', snapshot => {
     updateScoreboard();
-});
+  });
 
 /* ========= ÉCOUTE DES MODIFICATIONS DE L'ÉTAT DU JEU ========= */
 const listenToGame = () => {
