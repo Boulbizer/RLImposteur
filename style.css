@@ -82,7 +82,8 @@ button:hover {
 }
 
 /* ===== Liste des joueurs et vote ===== */
-#player-list, #vote-list {
+#player-list,
+#vote-list {
   list-style: none;
   padding: 0;
   margin: 15px 0;
@@ -108,7 +109,6 @@ button:hover {
   font-weight: 600;
 }
 
-/* Classes pour indiquer le vote */
 #vote-list li.selected {
   background-color: #00c282;
   color: #fff;
@@ -123,45 +123,65 @@ button:hover {
   background-color: #292929;
 }
 
-/* ===== Affichage du rôle ===== */
-#role-display {
-  margin-top: 20px;
-  font-size: 18px;
-  padding: 20px;
-  border-radius: 12px;
-  background-color: rgba(255, 255, 255, 0.05);
+/* ===== Flip Card pour la révélation ===== */
+.flip-card {
+  background-color: transparent;
+  width: 300px;
+  height: 200px;
+  perspective: 1000px;
+  margin: 20px auto;
+}
+
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+}
+
+.flip-card.flipped .flip-card-inner {
+  transform: rotateY(180deg);
+}
+
+.flip-card-front,
+.flip-card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
   border: 1px solid #444;
-  display: none;
-  opacity: 0;
-  transform: scale(0.95);
-  transition: all 0.5s ease;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
 }
 
-#role-display.show {
-  display: block;
-  opacity: 1;
-  transform: scale(1);
-}
-
-#role-badge {
-  display: inline-block;
-  padding: 6px 12px;
-  margin-bottom: 12px;
-  font-weight: 700;
-  border-radius: 6px;
-  font-size: 16px;
+.flip-card-front {
+  background-color: #333;
   color: white;
 }
 
-#role-badge.impostor {
-  background-color: #ff4444;
+.flip-card-back {
+  background-color: #555;
+  color: white;
+  transform: rotateY(180deg);
 }
 
-#role-badge.citizen {
-  background-color: #00c282;
+/* Style pour la placeholder et le contenu du rôle */
+.role-placeholder {
+  font-size: 48px;
+  font-weight: bold;
 }
 
-/* ===== Bouton rejouer ===== */
+.role-text {
+  font-size: 36px;
+  font-weight: bold;
+}
+
+/* ===== Boutons rejouer et copier lien ===== */
 #replay-btn {
   background-color: #ff7b00;
 }
@@ -170,7 +190,6 @@ button:hover {
   background-color: #cc6300;
 }
 
-/* ===== Bouton copier lien ===== */
 #copy-room-btn {
   background-color: #00aa7f;
 }
@@ -179,7 +198,7 @@ button:hover {
   background-color: #008e6b;
 }
 
-/* ===== Animation pour l'affichage du rôle ===== */
+/* ===== Animation reveal pour le rôle ===== */
 @keyframes revealFadeIn {
   from {
     opacity: 0;
@@ -193,28 +212,4 @@ button:hover {
 
 #role-display.animate {
   animation: revealFadeIn 0.6s ease-out forwards;
-}
-
-/* ===== Tableaux des scores ===== */
-#score-board {
-  list-style: none;
-  padding: 0;
-  margin: 15px auto;
-  max-width: 400px;
-  text-align: left;
-  border-top: 1px solid #444;
-}
-
-#score-board li {
-  padding: 10px 15px;
-  border-bottom: 1px solid #444;
-  background-color: #1e1e1e;
-  color: #00bfff;
-  font-weight: 500;
-  font-size: 16px;
-  margin: 0;
-}
-
-#score-board li:nth-child(odd) {
-  background-color: #1a1a1a;
 }
