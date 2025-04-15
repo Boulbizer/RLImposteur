@@ -123,6 +123,7 @@ const listenToPlayers = () => {
 };
 
 /* ========= INSCRIPTION DES JOUEURS ========= */
+// INSCRIPTION DES JOUEURS (dans joinBtn.addEventListener)
 joinBtn.addEventListener('click', async () => {
   const name = usernameInput.value.trim();
   pseudoError.textContent = "";
@@ -143,7 +144,16 @@ joinBtn.addEventListener('click', async () => {
 
   currentPlayer = name;
   currentUid = user.uid;
+  // Inscription du joueur dans la salle
   await playersRef.child(currentUid).set({ name });
+  
+  // Gérer le cas de déconnexion : supprimer automatiquement le joueur de la salle 
+  firebase.database().ref(`rooms/${roomKey}/players/${currentUid}`)
+    .onDisconnect().remove();
+  
+  // Optionnel: Supprimer les votes du joueur sur déconnexion
+  firebase.database().ref(`rooms/${roomKey}/votes/${currentUid}`)
+    .onDisconnect().remove();
 
   // Sauvegarde locale pour réutilisation
   localStorage.setItem('rl_pseudo', name);
