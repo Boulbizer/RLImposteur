@@ -1,26 +1,25 @@
 /* ========= VARIABLES & SELECTION DES ÉLÉMENTS ========= */
-const joinBtn       = document.getElementById('join-btn');
-const usernameInput = document.getElementById('username');
-const playerList    = document.getElementById('player-list');
-const lobbySection  = document.getElementById('lobby-section');
-const joinSection   = document.getElementById('join-section');
-const roleSection   = document.getElementById('role-section');
-const roleDisplay   = document.getElementById('role-display');
-const startBtn      = document.getElementById('start-btn');
-const replayBtn     = document.getElementById('replay-btn');
-const replaySection = document.getElementById('replay-section');
-const replayInfo    = document.getElementById('replay-info');
+const joinBtn         = document.getElementById('join-btn');
+const usernameInput   = document.getElementById('username');
+const playerList      = document.getElementById('player-list');
+const lobbySection    = document.getElementById('lobby-section');
+const joinSection     = document.getElementById('join-section');
+const roleSection     = document.getElementById('role-section');
+const roleDisplay     = document.getElementById('role-display');
+const startBtn        = document.getElementById('start-btn');
+const replayBtn       = document.getElementById('replay-btn');
+const replaySection   = document.getElementById('replay-section');
+const replayInfo      = document.getElementById('replay-info');
 const roomNameDisplay = document.getElementById('room-name');
-const createRoomBtn = document.getElementById('create-room-btn');
-const copyBtn       = document.getElementById('copy-room-btn');
-const copyFeedback  = document.getElementById('copy-feedback');
-const scoreBoard    = document.getElementById('score-board');
-const scoreSection  = document.getElementById('score-section');
-const voteSection   = document.getElementById('vote-section');
-
-const pseudoError   = document.getElementById('pseudo-error');
-const voteStatus    = document.getElementById('vote-status');
-const voteResult    = document.getElementById('vote-result');
+const createRoomBtn   = document.getElementById('create-room-btn');
+const copyBtn         = document.getElementById('copy-room-btn');
+const copyFeedback    = document.getElementById('copy-feedback');
+const scoreBoard      = document.getElementById('score-board');
+const scoreSection    = document.getElementById('score-section');
+const voteSection     = document.getElementById('vote-section');
+const pseudoError     = document.getElementById('pseudo-error');
+const voteStatus      = document.getElementById('vote-status');
+const voteResult      = document.getElementById('vote-result');
 
 let currentPlayer = '';
 let roomKey = getRoomKey();
@@ -97,7 +96,7 @@ createRoomBtn.addEventListener('click', async () => {
 });
 
 /* ========= GESTION DES JOUEURS ========= */
-// Met à jour l'affichage de la liste des joueurs dans le lobby
+// Met à jour l'affichage de la liste des joueurs dans le lobby et affiche le bouton de démarrage pour le leader.
 const updatePlayerListUI = async (players) => {
   playerList.innerHTML = "";
   players.forEach(name => {
@@ -106,7 +105,7 @@ const updatePlayerListUI = async (players) => {
     playerList.appendChild(li);
   });
   
-  // Afficher le bouton "Lancer la partie" uniquement si l'utilisateur est le leader et le nombre de joueurs est suffisant
+  // Afficher le bouton "Lancer la partie" uniquement si l'utilisateur est le leader et le nombre de joueurs est suffisant.
   const leader = await firebase.database().ref(`rooms/${roomKey}/hostUid`).once('value');
   startBtn.style.display = (currentUid === leader.val() && players.length >= MIN_PLAYERS_TO_START)
     ? 'inline-block'
@@ -225,8 +224,12 @@ const startVoting = (realImpostor) => {
       if (hasVoted) return; // Empêche un second vote
       hasVoted = true;
       
-      // Désactive visuellement les autres options
-      Array.from(voteList.children).forEach(child => child.classList.add("disabled"));
+      // Appliquer une classe pour indiquer le vote sélectionné
+      li.classList.add("selected");
+      // Désactiver visuellement les autres éléments
+      Array.from(voteList.children).forEach(child => {
+        if (child !== li) child.classList.add("disabled");
+      });
       
       voteStatus.textContent = "✅ Vote enregistré. En attente des autres joueurs...";
       const user = firebase.auth().currentUser;
@@ -275,7 +278,7 @@ const startVoting = (realImpostor) => {
 /* ========= MISE À JOUR DES SCORES ========= */
 const updateScores = async (votes, realImpostor) => {
   const scoresRef = firebase.database().ref(`rooms/${roomKey}/scores`);
-  // Lecture de la liste complète des joueurs afin d'obtenir leurs noms réels
+  // Lecture de la liste complète des joueurs pour obtenir leurs noms réels
   const playersSnap = await firebase.database().ref(`rooms/${roomKey}/players`).once('value');
   const playersMapping = playersSnap.val() || {};
 
@@ -301,7 +304,7 @@ const updateScores = async (votes, realImpostor) => {
   }
 
   // 2. Appliquer le bonus pour l’imposteur : +1 point par vote erroné (hors vote de l’imposteur lui-même)
-  // Identification de l'UID de l’imposteur à partir de la liste des joueurs
+  // Identifier l'UID de l’imposteur à partir de la liste des joueurs
   let impostorUid = null;
   for (const uid in playersMapping) {
     if (playersMapping[uid].name === realImpostor) {
@@ -335,12 +338,25 @@ const updateScores = async (votes, realImpostor) => {
 
 /* ========= MISE À JOUR DU TABLEAU DES SCORES ========= */
 const updateScoreboard = async () => {
+  // Récupérer la liste complète des joueurs pour s'assurer que tous apparaissent avec un score (même 0)
+  const playersSnap = await firebase.database().ref(`rooms/${roomKey}/players`).once('value');
+  const playersData = playersSnap.val() || {};
+
+  // Récupérer les scores enregistrés
   const scoresSnap = await firebase.database().ref(`rooms/${roomKey}/scores`).once('value');
-  const scores = scoresSnap.val() || {};
-  
-  // Conversion en tableau et tri par points décroissants
-  const scoreArray = Object.values(scores).sort((a, b) => b.points - a.points);
-  
+  const scoresData = scoresSnap.val() || {};
+
+  // Constituer un tableau avec tous les joueurs et leur score (0 par défaut)
+  const scoreArray = Object.entries(playersData).map(([uid, data]) => {
+    return {
+      name: data.name,
+      points: (scoresData[uid] && scoresData[uid].points) ? scoresData[uid].points : 0
+    };
+  });
+
+  // Tri par points décroissants
+  scoreArray.sort((a, b) => b.points - a.points);
+
   scoreBoard.innerHTML = "";
   scoreArray.forEach(s => {
     const li = document.createElement("li");
@@ -373,7 +389,7 @@ const listenToGame = () => {
 
 /* ========= OPTION REJOUER ========= */
 const showReplayOption = async () => {
-  // Seul le leader (utilisateur dont l'UID correspond à hostUid) voit les options de rejouer la partie
+  // Seul le leader (celui dont l'UID correspond à hostUid) voit les options de rejouer
   const leaderSnap = await firebase.database().ref(`rooms/${roomKey}/hostUid`).once('value');
   const isUserLeader = leaderSnap.val() === currentUid;
   
