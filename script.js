@@ -280,7 +280,7 @@ const startVoting = (realImpostor) => {
         <p><strong>🕵️ L’imposteur désigné :</strong> ${mostVoted} (${maxVotes} votes)</p>
         <p><strong>🎯 Le vrai imposteur était :</strong> ${realImpostorFinal}</p>
       `;
-      // On met à jour le scoreboard via le listener global (voir ci-dessous)
+      // Le scoreboard sera mis à jour via le listener global
       showReplayOption();
     }
   });
@@ -312,7 +312,7 @@ const updateScores = async (votes, realImpostor) => {
         currentScores[uid].points += 1;
       }
     }
-    // Appliquer le bonus pour l’imposteur : +1 point pour chaque vote erroné
+    // Appliquer le bonus pour l’imposteur : +1 point pour chaque vote erroné (hors vote de l'imposteur)
     let impostorUid = null;
     for (const uid in playersMapping) {
       if (playersMapping[uid].name === realImpostor) {
@@ -344,6 +344,15 @@ const updateScores = async (votes, realImpostor) => {
 
 /* ========= MISE À JOUR DU TABLEAU DES SCORES ========= */
 const updateScoreboard = async () => {
+  // Vérifier d'abord l'état de la manche
+  const gameSnap = await firebase.database().ref(`rooms/${roomKey}/game`).once('value');
+  const gameData = gameSnap.val();
+  // N'affiche le tableau que si la manche a été traitée
+  if (!gameData || !gameData.scoresProcessed) {
+    scoreSection.style.display = "none";
+    return;
+  }
+  
   // Récupérer la liste complète des joueurs
   const playersSnap = await firebase.database().ref(`rooms/${roomKey}/players`).once('value');
   const playersData = playersSnap.val() || {};
@@ -352,7 +361,7 @@ const updateScoreboard = async () => {
   const scoresSnap = await firebase.database().ref(`rooms/${roomKey}/scores`).once('value');
   const scoresData = scoresSnap.val() || {};
 
-  // Créer un tableau intégrant tous les joueurs avec score par défaut à 0 si non défini
+  // Constituer un tableau intégrant tous les joueurs avec un score par défaut de 0 si non défini
   const scoreArray = Object.entries(playersData).map(([uid, data]) => ({
     name: data.name,
     points: scoresData[uid] && scoresData[uid].points ? scoresData[uid].points : 0
@@ -372,7 +381,7 @@ const updateScoreboard = async () => {
 };
 
 /* ========= ÉCOUTE EN TEMPS RÉEL DES SCORES ========= */
-// Mise à jour globale du tableau de scores dès qu'une modification intervient sur "scores"
+// Met à jour le tableau dès qu'une modification intervient sur "scores"
 firebase.database().ref(`rooms/${roomKey}/scores`)
   .on('value', snapshot => {
     updateScoreboard();
