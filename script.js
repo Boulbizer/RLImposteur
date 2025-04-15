@@ -174,36 +174,36 @@ startBtn.addEventListener('click', () => {
 
 /* ========= AFFICHAGE DU RÔLE ========= */
 const showRole = (impostor, challenges) => {
+  // Masquer définitivement la section d'inscription pour tous les joueurs
   joinSection.style.display = "none";
   lobbySection.style.display = "none";
-
+  
+  // Optionnel : masquer le label du pseudo
   const pseudoLabel = document.getElementById("pseudo-label");
   if (pseudoLabel) pseudoLabel.style.display = "none";
-
+  
   roleSection.style.display = "block";
-  roleDisplay.innerHTML = ""; // reset
-
-  const isImpostor = currentPlayer === impostor;
-
-  const card = document.createElement("div");
-  card.className = `role-card ${isImpostor ? "impostor" : "citizen"}`;
-
-  card.innerHTML = `
-    <div class="badge">${isImpostor ? "🔥 Imposteur" : "🚀 Joueur loyal"}</div>
-    <div class="icon">${isImpostor ? "😈" : "🧑‍🚀"}</div>
-    <div class="role-name">${isImpostor ? "Saboteur Nitro" : "Citoyen Rocket"}</div>
-    <div class="description">
-      ${isImpostor 
-        ? `<strong>🎯 Tes défis :</strong><br>${challenges.map(c => `• ${c}`).join('<br>')}` 
-        : "Joue normalement, détecte l’imposteur, marque des buts !"}
-    </div>
-  `;
-
-  roleDisplay.appendChild(card);
+  const badge = document.createElement("div");
+  badge.id = "role-badge";
+  roleDisplay.innerHTML = "";
+  if (currentPlayer === impostor) {
+    badge.classList.add("impostor");
+    badge.textContent = "🚨 IMPOSTEUR";
+    roleDisplay.appendChild(badge);
+    roleDisplay.innerHTML += `<div style="margin-top:10px; text-align:left;">
+      <strong>🎯 Tes défis :</strong><br>${challenges.map(c => `• ${c}`).join('<br>')}
+      </div>`;
+  } else {
+    badge.classList.add("citizen");
+    badge.textContent = "🟢 COÉQUIPIER";
+    roleDisplay.appendChild(badge);
+    roleDisplay.innerHTML += `<p>Gagne la partie et démasque l’imposteur.</p>`;
+  }
+  // Animation d'apparition
   roleDisplay.classList.remove("show", "animate");
   void roleDisplay.offsetWidth;
-  roleDisplay.classList.add("show");
-
+  roleDisplay.classList.add("show", "animate");
+  // Lancer la phase de vote après 3 secondes
   setTimeout(() => startVoting(impostor), 3000);
 };
 
