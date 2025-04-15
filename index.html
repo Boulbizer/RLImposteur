@@ -42,16 +42,14 @@
         <button id="start-btn" style="display: none;">Lancer la partie</button>
       </div>
 
-      <!-- Section de révélation du rôle avec effet flip card -->
+      <!-- Section affichage du rôle (inchangée) -->
       <div id="role-section" style="display: none;">
         <div class="flip-card">
           <div class="flip-card-inner" id="role-card">
             <div class="flip-card-front">
-              <!-- Face avant (rôle caché) -->
               <div class="role-placeholder">?</div>
             </div>
             <div class="flip-card-back">
-              <!-- Face arrière (rôle révélé) -->
               <div id="role-content"></div>
             </div>
           </div>
@@ -63,7 +61,19 @@
         <h2>🗳️ Vote : Qui est l’imposteur ?</h2>
         <ul id="vote-list"></ul>
         <p id="vote-status" class="small-note"></p>
-        <div id="vote-result" style="margin-top: 20px;"></div>
+        <!-- Intégration de la flip card pour afficher le résultat du vote -->
+        <div id="vote-result" style="margin-top: 20px;">
+          <div id="vote-flip-card" class="flip-card">
+            <div class="flip-card-inner" id="vote-card">
+              <div class="flip-card-front">
+                <div class="vote-placeholder">?</div>
+              </div>
+              <div class="flip-card-back">
+                <div id="vote-outcome"></div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Section tableau des scores -->
