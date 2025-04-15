@@ -275,49 +275,60 @@ const startVoting = (realImpostor) => {
 /* ========= MISE À JOUR DES SCORES ========= */
 const updateScores = async (votes, realImpostor) => {
   const scoresRef = firebase.database().ref(`rooms/${roomKey}/scores`);
-  const scoreSnap = await scoresRef.get();
-  const currentScores = scoreSnap.val() || {};
 
-  // Attribution d'1 point pour chaque vote correct
+  // 1. Pour chaque vote, mettre à jour le score du joueur votant (1 point s'il a voté correctement)
   for (const uid in votes) {
     const voteName = votes[uid];
-    const playerSnap = await firebase.database().ref(`rooms/${roomKey}/players/${uid}`).get();
-    const name = playerSnap.exists() ? playerSnap.val().name : "Joueur inconnu";
-    const prevScore = currentScores[uid]?.points || 0;
-    const isCorrect = voteName === realImpostor;
-    await scoresRef.child(uid).set({
-      name,
-      points: prevScore + (isCorrect ? 1 : 0)
+    const playerScoreRef = firebase.database().ref(`rooms/${roomKey}/scores/${uid}`);
+    await playerScoreRef.transaction(currentData => {
+      // Initialisation si aucune donnée n'existe pour ce joueur
+      if (currentData === null) {
+        return {
+          name: "Joueur inconnu",
+          points: (voteName === realImpostor ? 1 : 0)
+        };
+      } else {
+        const additional = (voteName === realImpostor ? 1 : 0);
+        return {
+          ...currentData,
+          points: currentData.points + additional
+        };
+      }
     });
   }
 
-  // Bonus pour l'imposteur : +1 point par vote erroné (hors vote de l'imposteur lui-même)
-  const impostorEntry = Object.entries(currentScores).find(
-    ([uid, data]) => data.name === realImpostor
-  );
-  if (impostorEntry) {
-    const [impostorUid] = impostorEntry;
+  // 2. Appliquer le bonus pour l’imposteur : +1 point par vote erroné (hors vote de l’imposteur lui-même)
+  // On va chercher l'UID de l’imposteur en se basant sur le score dont le nom correspond à realImpostor.
+  const scoreSnapshot = await scoresRef.once("value");
+  const currentScores = scoreSnapshot.val() || {};
+  let impostorUid = null;
+  for (const uid in currentScores) {
+    if (currentScores[uid].name === realImpostor) {
+      impostorUid = uid;
+      break;
+    }
+  }
+
+  if (impostorUid) {
     let bonusPoints = 0;
     for (const [voterUid, votedName] of Object.entries(votes)) {
       if (votedName !== realImpostor && voterUid !== impostorUid) bonusPoints++;
     }
-    const prev = currentScores[impostorUid]?.points || 0;
-    await scoresRef.child(impostorUid).update({ points: prev + bonusPoints });
-  }
-};
-
-const updateScoreboard = () => {
-  firebase.database().ref(`rooms/${roomKey}/scores`).once("value").then(snapshot => {
-    const data = snapshot.val() || {};
-    const scores = Object.values(data).sort((a, b) => b.points - a.points);
-    scoreBoard.innerHTML = "";
-    scores.forEach(s => {
-      const li = document.createElement("li");
-      li.textContent = `${s.name}: ${s.points} pts`;
-      scoreBoard.appendChild(li);
+    const impostorRef = firebase.database().ref(`rooms/${roomKey}/scores/${impostorUid}`);
+    await impostorRef.transaction(currentData => {
+      if (currentData === null) {
+        return {
+          name: realImpostor,
+          points: bonusPoints
+        };
+      } else {
+        return {
+          ...currentData,
+          points: currentData.points + bonusPoints
+        };
+      }
     });
-    scoreSection.style.display = "block";
-  });
+  }
 };
 
 /* ========= ÉCOUTE DES MODIFICATIONS DE L'ÉTAT DU JEU ========= */
