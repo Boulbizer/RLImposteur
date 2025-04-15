@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700&display=swap');
 
+/* ===== Global ===== */
 body {
   margin: 0;
   padding: 0;
@@ -12,6 +13,7 @@ body {
   min-height: 100vh;
 }
 
+/* ===== Conteneur principal ===== */
 .container {
   background-color: rgba(20, 20, 20, 0.95);
   border: 1px solid #333;
@@ -23,6 +25,7 @@ body {
   text-align: center;
 }
 
+/* ===== Titres et textes ===== */
 .title {
   font-size: 30px;
   margin-bottom: 10px;
@@ -36,6 +39,13 @@ body {
   margin-bottom: 20px;
 }
 
+.small-note {
+  font-size: 13px;
+  color: #aaa;
+  margin-top: 5px;
+}
+
+/* ===== Inputs & Boutons ===== */
 input[type="text"] {
   padding: 12px 15px;
   width: 80%;
@@ -71,22 +81,46 @@ button:hover {
   background-color: #005fa3;
 }
 
-#player-list {
+/* ===== Listes ===== */
+#player-list, #vote-list, #score-board {
   list-style: none;
   padding: 0;
   margin: 15px 0;
 }
 
-#player-list li {
+#player-list li, #vote-list li, #score-board li {
   margin: 6px 0;
   padding: 8px 12px;
   border-radius: 6px;
+}
+
+/* Style spécifique pour joueurs */
+#player-list li {
   background-color: #1e1e1e;
   color: #00bfff;
   font-weight: 500;
   text-align: left;
 }
 
+/* Style pour votes */
+#vote-list li {
+  background-color: #1f1f1f;
+  cursor: pointer;
+  transition: 0.2s ease;
+  font-weight: 600;
+}
+
+#vote-list li:hover {
+  background-color: #292929;
+}
+
+#vote-list li.voted {
+  background-color: #00c282;
+  color: #fff;
+  cursor: default;
+}
+
+/* ===== Section rôle ===== */
 #role-display {
   margin-top: 20px;
   font-size: 18px;
@@ -124,6 +158,7 @@ button:hover {
   background-color: #00c282;
 }
 
+/* Bouton rejouer */
 #replay-btn {
   background-color: #ff7b00;
 }
@@ -132,6 +167,7 @@ button:hover {
   background-color: #cc6300;
 }
 
+/* Bouton copier lien */
 #copy-room-btn {
   background-color: #00aa7f;
 }
@@ -140,12 +176,7 @@ button:hover {
   background-color: #008e6b;
 }
 
-.small-note {
-  font-size: 13px;
-  color: #aaa;
-  margin-top: 5px;
-}
-
+/* Animation pour l'affichage du rôle */
 @keyframes revealFadeIn {
   from {
     opacity: 0;
@@ -159,53 +190,4 @@ button:hover {
 
 #role-display.animate {
   animation: revealFadeIn 0.6s ease-out forwards;
-}
-
-#vote-list {
-  list-style: none;
-  padding: 0;
-  margin-top: 10px;
-}
-
-#vote-list li {
-  margin: 6px 0;
-  padding: 10px 16px;
-  background-color: #1f1f1f;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: 0.2s ease;
-  font-weight: 600;
-}
-
-#vote-list li:hover {
-  background-color: #292929;
-}
-
-#vote-list li.voted {
-  background-color: #00c282;
-  color: #fff;
-  cursor: default;
-}
-
-#score-board {
-  list-style: none;
-  padding: 0;
-  margin-top: 10px;
-  text-align: left;
-}
-
-#score-board li {
-  padding: 6px 10px;
-  background-color: #2b2b2b;
-  margin-bottom: 5px;
-  border-radius: 6px;
-  font-weight: 500;
-}
-
-#pseudo-label {
-  font-size: 13px;
-  font-style: italic;
-  color: #888;
-  margin-top: -6px;
-  text-align: center;
 }
