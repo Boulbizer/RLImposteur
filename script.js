@@ -17,10 +17,11 @@ const copyFeedback    = document.getElementById('copy-feedback');
 const scoreBoard      = document.getElementById('score-board');
 const scoreSection    = document.getElementById('score-section');
 const voteSection     = document.getElementById('vote-section');
-// Pour conserver l'ancien usage, le conteneur de résultat voteResult sera utilisé en flip‑card
-const voteResult      = document.getElementById('voteResult');
 const pseudoError     = document.getElementById('pseudo-error');
+const pseudoLabel     = document.getElementById('pseudo-label');
 const voteStatus      = document.getElementById('vote-status');
+// Nous utilisons voteResult comme conteneur pour la flip-card.
+const voteResult      = document.getElementById('voteResult');
 
 let currentPlayer = '';
 let roomKey = getRoomKey();
@@ -53,7 +54,7 @@ function getRoomKey() {
 const getRandomChallenges = (count = 3) =>
   [...IMPOSTOR_CHALLENGES].sort(() => 0.5 - Math.random()).slice(0, count);
 
-// Affiche un message temporaire dans un élément
+// Affiche un message temporaire
 const showFeedback = (element, message, duration = 2000) => {
   element.textContent = message;
   setTimeout(() => { element.textContent = ""; }, duration);
@@ -67,14 +68,15 @@ const isLeader = async () => {
 
 /* ========= INITIALISATION DE L'INTERFACE ========= */
 if (!roomKey) {
-  // Pas de salle : afficher uniquement la création de salle
+  // Pas de salle : afficher uniquement la création de salle.
   joinSection.style.display = 'none';
   document.getElementById('create-room-section').style.display = 'block';
 } else {
-  // Une salle existe : afficher les éléments associés
   roomNameDisplay.textContent = `Salle : ${roomKey}`;
+  // Pour la phase de test, on affiche joinSection pour permettre de rejoindre
+  // En production, vous pourrez vous baser sur Firebase pour déterminer l'affichage.
   if (localStorage.getItem('rl_pseudo') && localStorage.getItem('rl_room') === roomKey) {
-    joinSection.style.display = 'none'; // Masquer l'inscription si déjà inscrit
+    joinSection.style.display = 'none';
   } else {
     joinSection.style.display = 'block';
   }
@@ -100,7 +102,6 @@ createRoomBtn.addEventListener('click', async () => {
 });
 
 /* ========= GESTION DES JOUEURS ========= */
-// Met à jour la liste des joueurs dans le lobby et affiche le bouton "Lancer la partie" uniquement pour le leader.
 const updatePlayerListUI = async (players) => {
   playerList.innerHTML = "";
   players.forEach(name => {
@@ -114,7 +115,6 @@ const updatePlayerListUI = async (players) => {
     : 'none';
 };
 
-// Écoute en temps réel les mises à jour des joueurs
 const listenToPlayers = () => {
   firebase.database().ref(`rooms/${roomKey}/players`)
     .on('value', snapshot => {
@@ -141,10 +141,8 @@ joinBtn.addEventListener('click', async () => {
   currentPlayer = name;
   currentUid = user.uid;
   await playersRef.child(currentUid).set({ name });
-  // Sur déconnexion, retirer le joueur et ses votes
   firebase.database().ref(`rooms/${roomKey}/players/${currentUid}`).onDisconnect().remove();
   firebase.database().ref(`rooms/${roomKey}/votes/${currentUid}`).onDisconnect().remove();
-  // Sauvegarde locale
   localStorage.setItem('rl_pseudo', name);
   localStorage.setItem('rl_room', roomKey);
   usernameInput.value = "";
@@ -162,17 +160,16 @@ startBtn.addEventListener('click', () => {
     impostor,
     challenges,
     started: true,
-    scoresProcessed: false  // Réinitialisation pour la manche
+    scoresProcessed: false
   });
   firebase.database().ref(`rooms/${roomKey}/votes`).remove();
 });
 
 /* ========= AFFICHAGE DU RÔLE ========= */
 const showRole = (impostor, challenges) => {
-  // Masquer définitivement la section d'inscription et le lobby
+  // Masquer l'inscription et le lobby définitivement
   joinSection.style.display = "none";
   lobbySection.style.display = "none";
-  const pseudoLabel = document.getElementById("pseudo-label");
   if (pseudoLabel) pseudoLabel.style.display = "none";
   
   roleSection.style.display = "block";
@@ -225,7 +222,6 @@ const startVoting = (realImpostor) => {
     });
     voteList.appendChild(li);
   });
-  // Écoute en temps réel des votes
   const votesRef = firebase.database().ref(`rooms/${roomKey}/votes`);
   votesRef.on("value", async snapshot => {
     const votes = snapshot.val() || {};
@@ -248,13 +244,11 @@ const startVoting = (realImpostor) => {
       const gameSnap = await firebase.database().ref(`rooms/${roomKey}/game`).get();
       const gameData = gameSnap.val();
       const realImpostorFinal = gameData.impostor;
-      // Seul le leader effectue la mise à jour globale des scores
       const leaderSnap = await firebase.database().ref(`rooms/${roomKey}/hostUid`).once('value');
       if (leaderSnap.val() === currentUid) {
         await updateScores(votes, realImpostorFinal);
       }
-      // Mise à jour du flip-card pour révéler le résultat du vote
-      // Construction de la structure flip-card si elle n'est pas déjà présente
+      // Construire la structure de la flip-card pour le résultat
       voteResult.innerHTML = `
         <div class="flip-card-inner">
           <div class="flip-card-front">
@@ -265,9 +259,8 @@ const startVoting = (realImpostor) => {
             <p><strong>🎯 Le vrai imposteur était :</strong> <span id="realImpostorResult">${realImpostorFinal}</span></p>
           </div>
         </div>`;
-      // Forcer le flip en ajoutant la classe "flipped"
       voteResult.classList.remove("flipped");
-      void voteResult.offsetWidth; // Reflow
+      void voteResult.offsetWidth;
       voteResult.classList.add("flipped");
       showReplayOption();
     }
@@ -283,7 +276,6 @@ const updateScores = async (votes, realImpostor) => {
     if (currentScores === null) {
       currentScores = {};
     }
-    // Chaque vote correct rapporte 1 point pour le votant
     for (const uid in votes) {
       const voteName = votes[uid];
       if (!currentScores[uid]) {
@@ -296,7 +288,6 @@ const updateScores = async (votes, realImpostor) => {
         currentScores[uid].points += 1;
       }
     }
-    // Bonus pour l'imposteur : +1 point par vote erroné (hors vote de l'imposteur lui-même)
     let impostorUid = null;
     for (const uid in playersMapping) {
       if (playersMapping[uid].name === realImpostor) {
@@ -367,7 +358,7 @@ const listenToGame = () => {
         replaySection.style.display = "none";
         roleDisplay.innerHTML = "";
         roleDisplay.classList.remove("impostor", "citizen", "show", "animate");
-        document.getElementById("voteResult").innerHTML = "";
+        voteResult.innerHTML = "";
         lobbySection.style.display = "block";
       }
     });
@@ -389,8 +380,9 @@ replayBtn.addEventListener("click", () => {
   firebase.database().ref(`rooms/${roomKey}/votes`).remove();
   roleSection.style.display = "none";
   voteSection.style.display = "none";
-  document.getElementById("voteResult").innerHTML = "";
-  joinSection.style.display = "none"; // L'inscription reste masquée
+  voteResult.innerHTML = "";
+  // On garde joinSection masqué (inscription déjà faite)
+  joinSection.style.display = "none";
   lobbySection.style.display = "block";
   usernameInput.value = "";
 });
@@ -407,11 +399,18 @@ firebase.auth().onAuthStateChanged(user => {
         firebase.database().ref(`rooms/${roomKey}/players/${user.uid}`).set({ name: currentPlayer });
         joinSection.style.display = "none";
         lobbySection.style.display = "block";
+        if (pseudoLabel) {
+          pseudoLabel.textContent = `👤 ${currentPlayer}`;
+          pseudoLabel.style.display = "block";
+        }
       } else {
         firebase.database().ref(`rooms/${roomKey}/players/${user.uid}`).once("value").then(snap => {
           if (snap.exists()) {
             currentPlayer = snap.val().name;
-            document.getElementById("pseudo-label").textContent = `👤 ${currentPlayer}`;
+            if (pseudoLabel) {
+              pseudoLabel.textContent = `👤 ${currentPlayer}`;
+              pseudoLabel.style.display = "block";
+            }
             joinSection.style.display = "none";
             lobbySection.style.display = "block";
           }
