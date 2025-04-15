@@ -1,161 +1,182 @@
-/* ===== Style Flat Rocket League - Grille complète + transparence + police Rajdhani ===== */
-@import url('https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700&family=Rajdhani:wght@500;700&display=swap');
+/* ===== Style Flat Rocket League - Moderne & Épuré avec SVG décoratif Rocket League ===== */
+@import url('https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700&display=swap');
 
 body {
   margin: 0;
   padding: 0;
-  font-family: 'Rajdhani', sans-serif;
+  font-family: 'Titillium Web', sans-serif;
   background: linear-gradient(to bottom right, #1e1e3f, #2b2b60);
   color: #f0f0f0;
-  min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
+  min-height: 100vh;
+  position: relative;
   overflow: hidden;
 }
 
+/* SVG décoratif Rocket League */
+body::before {
+  content: "";
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 600px;
+  height: 600px;
+  background-image: url('https://upload.wikimedia.org/wikipedia/commons/e/e0/Rocket_League_logo.svg');
+  background-repeat: no-repeat;
+  background-size: contain;
+  opacity: 0.03;
+  z-index: 0;
+}
+
 .container {
-  display: grid;
-  grid-template-areas:
-    "title title title"
-    "players role vote"
-    "join join join"
-    ". . actions";
-  grid-template-columns: 1fr 1.2fr 1fr;
-  grid-template-rows: auto auto auto auto;
-  gap: 30px;
-  max-width: 1200px;
-  width: 100%;
-  padding: 40px 60px;
-  box-sizing: border-box;
+  background-color: #252545;
+  border-radius: 16px;
+  padding: 40px 30px;
+  max-width: 520px;
+  width: 90%;
+  text-align: center;
   position: relative;
+  z-index: 1;
 }
 
 .title {
-  grid-area: title;
-  text-align: center;
-  font-size: 40px;
+  font-size: 34px;
+  margin-bottom: 15px;
   font-weight: 700;
   color: #ffb347;
 }
 
-#lobby-section { grid-area: players; }
-#role-section { grid-area: role; }
-#vote-section { grid-area: vote; }
-#replay-section { grid-area: actions; justify-self: end; }
-#start-btn { grid-area: actions; justify-self: end; }
-#create-room-section, #copy-room-section, #join-section { grid-area: join; justify-self: center; text-align: center; }
-
-#lobby-section, #role-section, #vote-section {
-  background-color: rgba(37, 37, 69, 0.8);
-  border-radius: 16px;
-  padding: 24px;
-  min-height: 360px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  box-sizing: border-box;
-  backdrop-filter: blur(6px);
+.room-id {
+  font-size: 14px;
+  color: #ccc;
+  margin-bottom: 20px;
 }
 
-#role-display {
-  font-size: 20px;
-  padding: 24px;
-  background-color: rgba(42, 42, 79, 0.8);
+.small-note {
+  font-size: 13px;
+  color: #aaa;
+  margin-top: 5px;
+}
+
+input[type="text"] {
+  padding: 12px 14px;
+  width: 80%;
+  margin-bottom: 20px;
+  border-radius: 10px;
   border: 1px solid #3e3e6b;
-  border-radius: 14px;
-  width: 100%;
-  text-align: center;
-  margin-top: 10px;
-  transition: all 0.4s ease;
-  backdrop-filter: blur(4px);
-  display: none;
-}
-
-#role-display.show {
-  display: block;
-}
-
-#role-badge {
-  font-size: 18px;
-  padding: 10px 20px;
-  border-radius: 12px;
-  margin-bottom: 12px;
-  background-color: #ff4444;
-  font-weight: 700;
+  background-color: #2e2e4e;
   color: white;
-}
-
-#role-badge.citizen {
-  background-color: #00c282;
-}
-
-#player-list, #vote-list {
-  list-style: none;
-  width: 100%;
-  padding: 0;
-  margin: 0;
-}
-
-#player-list li, #vote-list li {
-  background-color: rgba(46, 46, 78, 0.9);
-  border-radius: 8px;
-  margin: 10px 0;
-  padding: 12px 18px;
   font-size: 16px;
-  font-weight: 600;
-  transition: background-color 0.2s;
+  text-align: center;
+  outline: none;
+  transition: border 0.2s ease;
 }
 
-#vote-list li:hover {
-  background-color: rgba(58, 58, 95, 0.9);
-  cursor: pointer;
-}
-
-#vote-list li.selected {
-  background-color: #00c282;
-  color: white;
+input[type="text"]:focus {
+  border-color: #ffb347;
 }
 
 button {
-  padding: 14px 24px;
-  border-radius: 12px;
-  background-color: #ff6600;
-  color: white;
-  font-weight: 700;
-  font-size: 18px;
+  padding: 12px 20px;
   border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+  background-color: #ff6600;
   cursor: pointer;
-  margin-top: 20px;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s ease;
+  margin-top: 10px;
 }
 
 button:hover {
   background-color: #ff8533;
 }
 
-input[type="text"] {
-  padding: 12px 16px;
-  font-size: 16px;
+#player-list li, #vote-list li {
+  list-style: none;
+  background-color: #2e2e4e;
   border-radius: 8px;
-  border: 1px solid #3e3e6b;
-  background-color: rgba(46, 46, 78, 0.9);
-  color: white;
-  width: 240px;
-  text-align: center;
+  margin: 6px 0;
+  padding: 10px 14px;
+  font-weight: 600;
+  color: #f0f0f0;
+  transition: background 0.2s ease;
 }
 
-#start-btn, #replay-btn {
-  margin-top: 30px;
+#vote-list li:hover {
+  background-color: #3a3a5f;
+  cursor: pointer;
+}
+
+#vote-list li.selected {
+  background-color: #00c282;
+  color: white;
+  font-weight: bold;
+}
+
+#vote-list li.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+#role-display {
+  margin-top: 20px;
+  font-size: 18px;
+  padding: 20px;
+  border-radius: 14px;
+  background-color: #2a2a4f;
+  border: 1px solid #3e3e6b;
+  display: none;
+  color: #ffffff;
+  text-align: center;
+  transform: scale(0.95);
+  transition: all 0.4s ease;
+}
+
+#role-display.show {
+  display: block;
+  transform: scale(1);
+}
+
+#role-badge {
+  display: inline-block;
+  padding: 8px 16px;
+  margin-bottom: 10px;
+  font-weight: 700;
+  border-radius: 10px;
+  font-size: 16px;
+  color: white;
+  background-color: #ff4444;
+}
+
+#role-badge.citizen {
+  background-color: #00c282;
 }
 
 #score-board li {
-  background-color: rgba(46, 46, 78, 0.9);
-  padding: 10px 16px;
+  background-color: #2e2e4e;
   border-radius: 6px;
-  margin-bottom: 8px;
-  font-size: 16px;
+  padding: 10px 15px;
+  margin: 6px 0;
+  color: #f0f0f0;
   font-weight: 500;
+  font-size: 16px;
+  text-align: left;
+}
+
+#score-board li:nth-child(odd) {
+  background-color: #27274a;
+}
+
+#replay-btn {
+  background-color: #ff7b00;
+}
+
+#replay-btn:hover {
+  background-color: #cc6300;
 }
 
 #copy-room-btn {
@@ -164,8 +185,4 @@ input[type="text"] {
 
 #copy-room-btn:hover {
   background-color: #008e6b;
-}
-
-#pseudo-error {
-  margin-top: 8px;
 }
