@@ -59,6 +59,12 @@ const showFeedback = (element, message, duration = 2000) => {
   setTimeout(() => { element.textContent = ""; }, duration);
 };
 
+// Vérifie si l'utilisateur courant est le leader en comparant son uid avec celui stocké dans Firebase
+const isLeader = async () => {
+  const snap = await firebase.database().ref(`rooms/${roomKey}/hostUid`).once('value');
+  return snap.val() === currentUid;
+};
+
 /* ========= INITIALISATION DE L'INTERFACE ========= */
 if (!roomKey) {
   // Afficher la section de création de salle
@@ -92,20 +98,19 @@ createRoomBtn.addEventListener('click', async () => {
 
 /* ========= GESTION DES JOUEURS ========= */
 // Met à jour l'affichage de la liste des joueurs dans le lobby
-const updatePlayerListUI = (players) => {
+const updatePlayerListUI = async (players) => {
   playerList.innerHTML = "";
   players.forEach(name => {
     const li = document.createElement('li');
     li.textContent = name;
     playerList.appendChild(li);
   });
-  // Afficher le bouton start si l'utilisateur courant est l'organisateur et le nombre de joueurs est suffisant
-  firebase.database().ref(`rooms/${roomKey}/hostUid`).once('value').then(snap => {
-    const hostUid = snap.val();
-    startBtn.style.display = (currentUid === hostUid && players.length >= MIN_PLAYERS_TO_START)
-      ? 'inline-block'
-      : 'none';
-  });
+  
+  // Afficher le bouton "Lancer la partie" uniquement si l'utilisateur est le leader et le nombre de joueurs est suffisant
+  const leader = await firebase.database().ref(`rooms/${roomKey}/hostUid`).once('value');
+  startBtn.style.display = (currentUid === leader.val() && players.length >= MIN_PLAYERS_TO_START)
+    ? 'inline-block'
+    : 'none';
 };
 
 // Écoute en temps réel les mises à jour des joueurs dans Firebase
@@ -209,7 +214,7 @@ const startVoting = (realImpostor) => {
   voteList.innerHTML = "";
   voteStatus.textContent = "Clique sur un joueur pour voter.";
 
-  // Créer la liste des joueurs (exclusion du votant lui-même)
+  // Créer la liste des joueurs (exclusion du votant)
   players.forEach(name => {
     if (name === currentPlayer) return;
     const li = document.createElement("li");
@@ -330,12 +335,14 @@ const listenToGame = () => {
 };
 
 /* ========= OPTION REJOUER ========= */
-const showReplayOption = () => {
-  // Le leader est le premier joueur inscrit
-  const isLeader = players[0] === currentPlayer;
+const showReplayOption = async () => {
+  // Seul le leader (utilisateur dont l'UID correspond à hostUid) voit les options de rejouer la partie
+  const leaderSnap = await firebase.database().ref(`rooms/${roomKey}/hostUid`).once('value');
+  const isUserLeader = leaderSnap.val() === currentUid;
+  
   replaySection.style.display = "block";
-  replayBtn.style.display = isLeader ? "inline-block" : "none";
-  replayInfo.textContent = isLeader
+  replayBtn.style.display = isUserLeader ? "inline-block" : "none";
+  replayInfo.textContent = isUserLeader
     ? "Tu es l'organisateur. Tu peux relancer une partie."
     : "En attente que l'organisateur relance la partie.";
 };
