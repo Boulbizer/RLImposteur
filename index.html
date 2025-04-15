@@ -1,98 +1,111 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Imposteur Rocket League</title>
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <!-- Fichier CSS -->
-  <link rel="stylesheet" href="style.css">
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-database-compat.js"></script>
-  <script>
-    // Configuration Firebase - Remplacez ces valeurs par celles de votre projet
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_AUTH_DOMAIN",
-      databaseURL: "YOUR_DATABASE_URL",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_STORAGE_BUCKET",
-      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-      appId: "YOUR_APP_ID"
-    };
-    firebase.initializeApp(firebaseConfig);
-  </script>
-</head>
-<body>
-  <div class="container">
-    <h1 class="title">🎮 Imposteur Rocket League 🚗</h1>
-    
-    <!-- Affichage du nom de la salle -->
-    <p id="room-name" class="room-id"></p>
-    
-    <!-- Section pour copier le lien de la salle -->
-    <div id="copy-room-section" style="display: none;">
-      <button id="copy-room-btn">📋 Copier le lien de la salle</button>
-      <p id="copy-feedback" class="small-note"></p>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Imposteur Rocket League</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1 class="title">🎮 Imposteur Rocket League 🚗</h1>
+      <p id="room-name" class="room-id"></p>
+      <p id="pseudo-label" class="small-note"></p>
+
+      <!-- Section copie du lien de la salle -->
+      <div id="copy-room-section" style="display: none;">
+        <button id="copy-room-btn">📋 Copier le lien de la salle</button>
+        <p id="copy-feedback" class="small-note"></p>
+      </div>
+
+      <!-- Section création de salle -->
+      <div id="create-room-section">
+        <button id="create-room-btn">🎲 Créer une salle aléatoire</button>
+        <p class="small-note">
+          Ou partage un lien comme <code>?salle=match-potes</code>
+        </p>
+      </div>
+
+      <!-- Section pour rejoindre la partie -->
+      <div id="join-section" style="display: none;">
+        <input type="text" id="username" placeholder="Ton pseudo en jeu" />
+        <p id="pseudo-error" class="small-note" style="color: red;"></p>
+        <button id="join-btn">Rejoindre le match</button>
+      </div>
+
+      <!-- Lobby pour afficher la liste des joueurs -->
+      <div id="lobby-section" style="display: none;">
+        <h2>🚦 Joueurs en attente :</h2>
+        <ul id="player-list"></ul>
+        <button id="start-btn" style="display: none;">Lancer la partie</button>
+      </div>
+
+      <!-- Section affichage du rôle -->
+      <div id="role-section" style="display: none;">
+        <h2>🎯 Ton rôle dans le match</h2>
+        <p id="role-display"></p>
+      </div>
+
+      <!-- Section vote -->
+      <div id="vote-section" style="display: none; margin-top: 30px;">
+        <h2>🗳️ Vote : Qui est l’imposteur ?</h2>
+        <ul id="vote-list"></ul>
+        <p id="vote-status" class="small-note"></p>
+        <div id="vote-result" style="margin-top: 20px;"></div>
+      </div>
+
+      <!-- Zone de résultat du vote en flip-card -->
+      <div id="voteResult" class="flip-card"></div>
+
+      <!-- Section tableau des scores -->
+      <div id="score-section" style="display: none; margin-top: 30px;">
+        <h3>🏆 Scores</h3>
+        <ul id="score-board"></ul>
+      </div>
+
+      <!-- Section rejouer -->
+      <div id="replay-section" style="display: none; margin-top: 20px;">
+        <button id="replay-btn">🔁 Rejouer une partie</button>
+        <p id="replay-info" class="small-note"></p>
+      </div>
     </div>
-    
-    <!-- Section de création de salle -->
-    <div id="create-room-section" style="display: none;">
-      <button id="create-room-btn">🎲 Créer une salle aléatoire</button>
-      <p class="small-note">Ou partage un lien comme <code>?salle=match-potes</code></p>
-    </div>
-    
-    <!-- Section d'inscription -->
-    <div id="join-section" style="display: none;">
-      <input type="text" id="username" placeholder="Ton pseudo en jeu">
-      <p id="pseudo-error" class="small-note" style="color: red;"></p>
-      <button id="join-btn">Rejoindre le match</button>
-    </div>
-    
-    <!-- Optionnel : Label affichant le pseudo enregistré -->
-    <p id="pseudo-label" class="small-note" style="display: none;"></p>
-    
-    <!-- Section du lobby avec liste des joueurs -->
-    <div id="lobby-section" style="display: none;">
-      <h2>🚦 Joueurs en attente :</h2>
-      <ul id="player-list"></ul>
-      <button id="start-btn" style="display: none;">Lancer la partie</button>
-    </div>
-    
-    <!-- Section affichage du rôle dans la partie -->
-    <div id="role-section" style="display: none;">
-      <h2>🎯 Ton rôle dans le match</h2>
-      <div id="role-display"></div>
-    </div>
-    
-    <!-- Section de vote -->
-    <div id="vote-section" style="display: none;">
-      <h2>🗳️ Vote : Qui est l’imposteur ?</h2>
-      <ul id="vote-list"></ul>
-      <p id="vote-status" class="small-note"></p>
-    </div>
-    
-    <!-- Zone de résultat du vote en flip-card -->
-    <div id="voteResult" class="flip-card"></div>
-    
-    <!-- Tableau des scores -->
-    <div id="score-section" style="display: none;">
-      <h3>🏆 Scores</h3>
-      <ul id="score-board"></ul>
-    </div>
-    
-    <!-- Section pour rejouer -->
-    <div id="replay-section" style="display: none;">
-      <button id="replay-btn">🔁 Rejouer une partie</button>
-      <p id="replay-info" class="small-note"></p>
-    </div>
-  </div>
-  
-  <!-- Script principal -->
-  <script src="script.js"></script>
-</body>
+
+    <!-- Inclusion des Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-auth-compat.js"></script>
+
+    <!-- Configuration Firebase -->
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyBmsEOwMwVMVLjWN9FXW5KQI_2JfrdqdEc",
+        authDomain: "imposteurrl.firebaseapp.com",
+        databaseURL:
+          "https://imposteurrl-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "imposteurrl",
+        storageBucket: "imposteurrl.firebasestorage.app",
+        messagingSenderId: "1001914732934",
+        appId: "1:1001914732934:web:691bf7ae32dbbde9101c07"
+      };
+
+      firebase.initializeApp(firebaseConfig);
+      const database = firebase.database();
+
+      // Connexion anonyme automatique
+      firebase.auth().onAuthStateChanged((user) => {
+        if (!user) {
+          firebase.auth().signInAnonymously().catch((error) => {
+            console.error("Erreur auth anonyme :", error);
+          });
+        } else {
+          console.log("Utilisateur connecté :", user.uid);
+        }
+      });
+    </script>
+
+    <!-- Script principal refactorisé -->
+    <script src="script.js"></script>
+  </body>
 </html>
