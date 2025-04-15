@@ -213,15 +213,21 @@ const startVoting = (realImpostor) => {
   const voteList = document.getElementById("vote-list");
   voteList.innerHTML = "";
   voteStatus.textContent = "Clique sur un joueur pour voter.";
+  
+  let hasVoted = false; // Indique si le joueur a déjà voté
 
-  // Créer la liste des joueurs (exclusion du votant)
+  // Créer la liste des joueurs (exclusion du votant lui-même)
   players.forEach(name => {
     if (name === currentPlayer) return;
     const li = document.createElement("li");
     li.textContent = name;
     li.addEventListener("click", async () => {
-      if (li.classList.contains("voted")) return;
-      li.classList.add("voted");
+      if (hasVoted) return; // Empêche un second vote
+      hasVoted = true;
+      
+      // Désactive visuellement les autres options
+      Array.from(voteList.children).forEach(child => child.classList.add("disabled"));
+      
       voteStatus.textContent = "✅ Vote enregistré. En attente des autres joueurs...";
       const user = firebase.auth().currentUser;
       if (!user) return;
@@ -239,7 +245,7 @@ const startVoting = (realImpostor) => {
 
     if (totalVotes >= players.length) {
       votesRef.off();
-      // Calculer le vote majoritaire
+      // Calcul du vote majoritaire
       const tally = {};
       Object.values(votes).forEach(name => {
         tally[name] = (tally[name] || 0) + 1;
