@@ -213,32 +213,42 @@ const startVoting = (realImpostor) => {
   const voteList = document.getElementById("vote-list");
   voteList.innerHTML = "";
   voteStatus.textContent = "Clique sur un joueur pour voter.";
-  let hasVoted = false; // Empêche plusieurs votes
-  // Créer la liste des joueurs à voter (exclusion du votant)
+  
+  let hasVoted = false; // Empêche plusieurs votes pour le même joueur
+
+  // Créer la liste des joueurs à voter (excluant le votant)
   players.forEach(name => {
     if (name === currentPlayer) return;
     const li = document.createElement("li");
     li.textContent = name;
-    li.addEventListener("click", async () => {
+    li.addEventListener("click", () => {
       if (hasVoted) return;
       hasVoted = true;
+      
+      // Appliquer immédiatement les modifications visuelles
       li.classList.add("selected");
       Array.from(voteList.children).forEach(child => {
         if (child !== li) child.classList.add("disabled");
       });
       voteStatus.textContent = "✅ Vote enregistré. En attente des autres joueurs...";
+      
+      // Récupérer l'utilisateur courant
       const user = firebase.auth().currentUser;
       if (!user) return;
-      await firebase.database().ref(`rooms/${roomKey}/votes/${user.uid}`).set(name);
+      // Lancer la mise à jour Firebase sans attendre la fin de l'opération
+      firebase.database().ref(`rooms/${roomKey}/votes/${user.uid}`).set(name)
+        .catch(error => console.error("Erreur lors du vote:", error));
     });
     voteList.appendChild(li);
   });
+
   // Écoute en temps réel des votes
   const votesRef = firebase.database().ref(`rooms/${roomKey}/votes`);
   votesRef.on("value", async snapshot => {
     const votes = snapshot.val() || {};
     const totalVotes = Object.keys(votes).length;
     voteStatus.textContent = `🗳️ ${totalVotes}/${players.length} votes enregistrés`;
+
     if (totalVotes >= players.length) {
       votesRef.off();
       // Calcul du vote majoritaire
@@ -257,7 +267,7 @@ const startVoting = (realImpostor) => {
       const gameSnap = await firebase.database().ref(`rooms/${roomKey}/game`).get();
       const gameData = gameSnap.val();
       const realImpostorFinal = gameData.impostor;
-      // Seul le leader lance la mise à jour globale des scores
+      // Seul le leader déclenche la mise à jour globale des scores
       const leaderSnap = await firebase.database().ref(`rooms/${roomKey}/hostUid`).once('value');
       if (leaderSnap.val() === currentUid) {
         await updateScores(votes, realImpostorFinal);
