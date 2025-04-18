@@ -285,8 +285,7 @@ const startVoting = (realImpostor) => {
       `;
 
        // === NOUVEAU : Affiche le conteneur RL uniquement pour l’imposteur ===
-      if (currentPlayer === realImpostorFinal) {
-        if (impostorResultSection) {
+    if (currentPlayer === realImpostorFinal && impostorResultSection) {
   impostorResultSection.style.display = 'block';
 }
 
@@ -296,28 +295,31 @@ const startVoting = (realImpostor) => {
   });
 };
 
-/* ========= GESTION RÉSULTAT ROCKET LEAGUE === */
-impostorLostBtn.addEventListener('click', () => {
-  // Simple fermeture, pas de malus
+/* ========= GESTION RÉSULTAT ROCKET LEAGUE ========= */
 if (impostorResultSection) {
-  impostorResultSection.style.display = 'block';
-}
-
-impostorWonBtn.addEventListener('click', async () => {
-  // Transaction Firebase : -1 point pour l’imposteur
-  const scoreRef = firebase.database().ref(`rooms/${roomKey}/scores/${currentUid}`);
-  await scoreRef.transaction(cur => {
-    if (cur) {
-      cur.points = Math.max(0, cur.points - 1);
-      return cur;
-    }
-    return { name: currentPlayer, points: 0 };
+  // Quand l'imposteur clique "J'ai perdu" → on ferme simplement le conteneur
+  impostorLostBtn.addEventListener('click', () => {
+    impostorResultSection.style.display = 'none';
+    // si tu veux réafficher le vote, dé-commente la ligne ci‑dessous
+    // voteSection.style.display = 'block';
   });
-  alert("😈 Malus appliqué : tu perds 1 point !");
-if (impostorResultSection) {
-  impostorResultSection.style.display = 'block';
+
+  // Quand l'imposteur clique "J'ai gagné" → malus Firebase puis on ferme
+  impostorWonBtn.addEventListener('click', async () => {
+    const scoreRef = firebase.database().ref(`rooms/${roomKey}/scores/${currentUid}`);
+    await scoreRef.transaction(cur => {
+      if (cur) {
+        cur.points = Math.max(0, cur.points - 1);
+        return cur;
+      }
+      return { name: currentPlayer, points: 0 };
+    });
+    alert("😈 Malus appliqué : tu perds 1 point !");
+    impostorResultSection.style.display = 'none';
+    // si tu veux réafficher le vote, dé-commente la ligne ci‑dessous
+    // voteSection.style.display = 'block';
+  });
 }
-});
 
 /* ========= MISE À JOUR DES SCORES ========= */
 const updateScores = async (votes, realImpostor) => {
