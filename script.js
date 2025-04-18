@@ -297,19 +297,23 @@ function listenForVoteEnd(realImpostor) {
 /* ========= GESTION RÉSULTAT ROCKET LEAGUE ========= */
 if (impostorResultSection) {
   // "J'ai perdu" → on ferme, on enregistre vote nul et on désactive
-  impostorLostBtn.addEventListener('click', () => {
-  await firebase.database().ref(`rooms/${roomKey}/game`).update({ rlImpostorWon: false });
-  await firebase.database().ref(`rooms/${roomKey}/votes/${currentUid}`).set('abstain');
-   impostorResultSection.style.display = 'none';
-   impostorLostBtn.disabled = true;
-   impostorWonBtn.disabled  = true;
-});
+  impostorLostBtn.addEventListener('click', async () => {
+    // on enregistre le flag et l'abstention
+    await firebase.database().ref(`rooms/${roomKey}/game`).update({ rlImpostorWon: false });
+    await firebase.database().ref(`rooms/${roomKey}/votes/${currentUid}`).set('abstain');
+    // on ferme et on désactive
+    impostorResultSection.style.display = 'none';
+    impostorLostBtn.disabled = true;
+    impostorWonBtn.disabled  = true;
+  });
+
   // "J'ai gagné" → malus, vote nul, feedback, disable, refresh scores
   impostorWonBtn.addEventListener('click', async () => {
-    // Enregistrer le vote nul
+    // on enregistre le flag et l'abstention
     await firebase.database().ref(`rooms/${roomKey}/game`).update({ rlImpostorWon: true });
     await firebase.database().ref(`rooms/${roomKey}/votes/${currentUid}`).set('abstain');
-    // Appliquer le malus
+
+    // on applique le malus
     const scoreRef = firebase.database().ref(`rooms/${roomKey}/scores/${currentUid}`);
     await scoreRef.transaction(cur => {
       if (cur) {
@@ -318,12 +322,15 @@ if (impostorResultSection) {
       }
       return { name: currentPlayer, points: 0 };
     });
-    // Feedback in‑game
+
+    // feedback in‑game
     impostorFeedback.textContent = "😈 Malus appliqué : -1 point";
-    // Désactivation
-    impostorWonBtn.disabled     = true;
-    impostorLostBtn.disabled    = true;
-    // Rafraîchir immédiatement le scoreboard
+
+    // on désactive pour éviter tout clic répété
+    impostorWonBtn.disabled  = true;
+    impostorLostBtn.disabled = true;
+
+    // mise à jour immédiate du scoreboard
     updateScoreboard();
   });
 }
