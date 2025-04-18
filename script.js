@@ -21,10 +21,8 @@ const pseudoError     = document.getElementById('pseudo-error');
 const voteStatus      = document.getElementById('vote-status');
 const voteResult      = document.getElementById('vote-result');
 const impostorResultSection = document.getElementById('impostor-result-section');
-if (!impostorResultSection) {
-  console.warn("Impostor result section non trouvé, désactivation de la logique RL.");
-}
-
+const impostorResultText    = document.getElementById('impostor-result-text');
+const impostorFeedback      = document.getElementById('impostor-feedback');
 const impostorLostBtn       = document.getElementById('impostor-lost-btn');
 const impostorWonBtn        = document.getElementById('impostor-won-btn');
 
@@ -215,7 +213,18 @@ const showRole = (impostor, challenges) => {
 };
 
 /* ========= PHASE DE VOTE ========= */
-const startVoting = (realImpostor) => {
+  const startVoting = (realImpostor) => {
+  // 🚨 Imposteur : on saute l'écran de vote et on affiche directement l'écran RL
+  if (currentPlayer === realImpostor && impostorResultSection) {
+    voteSection.style.display = 'none';
+    impostorFeedback.textContent = "";                   // efface tout ancien feedback
+    impostorResultText.textContent = "Sois honnête... 😈"; // texte de base
+    impostorResultSection.style.display = 'block';
+    // on écoute quand même la fin des votes en tâche de fond
+    listenForVoteEnd(realImpostor);
+    return;
+  }
+
   voteSection.style.display = "block";
   const voteList = document.getElementById("vote-list");
   voteList.innerHTML = "";
@@ -295,16 +304,14 @@ const startVoting = (realImpostor) => {
   });
 };
 
-/* ========= GESTION RÉSULTAT ROCKET LEAGUE ========= */
+/* ========= GESTION RÉSULTAT IMPOSTEUR ROCKET LEAGUE ========= */
 if (impostorResultSection) {
-  // Quand l'imposteur clique "J'ai perdu" → on ferme simplement le conteneur
+  // « J'ai perdu » : fermeture de l'écran, pas de malus
   impostorLostBtn.addEventListener('click', () => {
     impostorResultSection.style.display = 'none';
-    // si tu veux réafficher le vote, dé-commente la ligne ci‑dessous
-    // voteSection.style.display = 'block';
   });
 
-  // Quand l'imposteur clique "J'ai gagné" → malus Firebase puis on ferme
+  // « J'ai gagné » : malus −1 point en Firebase + feedback in‑game + refresh scoreboard
   impostorWonBtn.addEventListener('click', async () => {
     const scoreRef = firebase.database().ref(`rooms/${roomKey}/scores/${currentUid}`);
     await scoreRef.transaction(cur => {
@@ -314,10 +321,11 @@ if (impostorResultSection) {
       }
       return { name: currentPlayer, points: 0 };
     });
-    alert("😈 Malus appliqué : tu perds 1 point !");
-    impostorResultSection.style.display = 'none';
-    // si tu veux réafficher le vote, dé-commente la ligne ci‑dessous
-    // voteSection.style.display = 'block';
+    // feedback in‑game
+    impostorFeedback.textContent = "😈 Malus appliqué : -1 point";
+    // mise à jour immédiate du tableau de scores
+    updateScoreboard();
+    // puis on garde ce feedback à l'écran jusqu'à ce que le vote se termine
   });
 }
 
