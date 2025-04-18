@@ -21,6 +21,10 @@ const pseudoError     = document.getElementById('pseudo-error');
 const voteStatus      = document.getElementById('vote-status');
 const voteResult      = document.getElementById('vote-result');
 const impostorResultSection = document.getElementById('impostor-result-section');
+if (!impostorResultSection) {
+  console.warn("Impostor result section non trouvé, désactivation de la logique RL.");
+}
+
 const impostorLostBtn       = document.getElementById('impostor-lost-btn');
 const impostorWonBtn        = document.getElementById('impostor-won-btn');
 
@@ -282,8 +286,10 @@ const startVoting = (realImpostor) => {
 
        // === NOUVEAU : Affiche le conteneur RL uniquement pour l’imposteur ===
       if (currentPlayer === realImpostorFinal) {
-        impostorResultSection.style.display = 'block';
-      }
+        if (impostorResultSection) {
+  impostorResultSection.style.display = 'block';
+}
+
       
       showReplayOption();
     }
@@ -293,8 +299,9 @@ const startVoting = (realImpostor) => {
 /* ========= GESTION RÉSULTAT ROCKET LEAGUE === */
 impostorLostBtn.addEventListener('click', () => {
   // Simple fermeture, pas de malus
-  impostorResultSection.style.display = 'none';
-});
+if (impostorResultSection) {
+  impostorResultSection.style.display = 'block';
+}
 
 impostorWonBtn.addEventListener('click', async () => {
   // Transaction Firebase : -1 point pour l’imposteur
@@ -307,7 +314,9 @@ impostorWonBtn.addEventListener('click', async () => {
     return { name: currentPlayer, points: 0 };
   });
   alert("😈 Malus appliqué : tu perds 1 point !");
-  impostorResultSection.style.display = 'none';
+if (impostorResultSection) {
+  impostorResultSection.style.display = 'block';
+}
 });
 
 /* ========= MISE À JOUR DES SCORES ========= */
