@@ -186,3 +186,19 @@ button:hover {
 #copy-room-btn:hover {
   background-color: #008e6b;
 }
+
+/* ===== Conteneur Résultat Rocket League ===== */
+#impostor-result-section {
+  background-color: rgba(60,20,20,0.9);
+  padding: 20px;
+  border-radius: 12px;
+  text-align: center;
+  margin-top: 20px;
+}
+#impostor-result-section button {
+  margin: 8px;
+  background-color: #c62828;
+}
+#impostor-result-section button:hover {
+  background-color: #e53935;
+}
