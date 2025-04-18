@@ -55,19 +55,23 @@
         <ul id="score-board"></ul>
       </div>
 
+    <!-- Section rejouer -->
       <div id="replay-section" style="display: none; margin-top: 20px;">
         <button id="replay-btn">🔁 Rejouer une partie</button>
         <p id="replay-info" class="small-note"></p>
       </div>
 
-      <!-- Résultat Rocket League pour l'imposteur -->
+    <!-- Résultat Rocket League pour l'imposteur -->
       <div id="impostor-result-section" style="display: none; margin-top: 20px;">
         <h2>🎮 Résultat de ta partie Rocket League</h2>
-        <p>Sois honnête... 😈</p>
+    <!-- Texte remplacé dynamiquement -->
+        <p id="impostor-result-text">Sois honnête... 😈</p>
+    <!-- Feedback du malus / remerciement -->
+        <p id="impostor-feedback" class="small-note"></p>
         <button id="impostor-lost-btn">J’ai perdu</button>
         <button id="impostor-won-btn">J’ai gagné</button>
       </div>
-    </div>
+
 
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-app-compat.js"></script>
