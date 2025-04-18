@@ -20,6 +20,9 @@ const voteSection     = document.getElementById('vote-section');
 const pseudoError     = document.getElementById('pseudo-error');
 const voteStatus      = document.getElementById('vote-status');
 const voteResult      = document.getElementById('vote-result');
+const impostorResultSection = document.getElementById('impostor-result-section');
+const impostorLostBtn       = document.getElementById('impostor-lost-btn');
+const impostorWonBtn        = document.getElementById('impostor-won-btn');
 
 let currentPlayer = '';
 let roomKey = getRoomKey();
@@ -276,10 +279,36 @@ const startVoting = (realImpostor) => {
         <p><strong>🕵️ L’imposteur désigné :</strong> ${mostVoted} (${maxVotes} votes)</p>
         <p><strong>🎯 Le vrai imposteur était :</strong> ${realImpostorFinal}</p>
       `;
+
+       // === NOUVEAU : Affiche le conteneur RL uniquement pour l’imposteur ===
+      if (currentPlayer === realImpostorFinal) {
+        impostorResultSection.style.display = 'block';
+      }
+      
       showReplayOption();
     }
   });
 };
+
+/* ========= GESTION RÉSULTAT ROCKET LEAGUE === */
+impostorLostBtn.addEventListener('click', () => {
+  // Simple fermeture, pas de malus
+  impostorResultSection.style.display = 'none';
+});
+
+impostorWonBtn.addEventListener('click', async () => {
+  // Transaction Firebase : -1 point pour l’imposteur
+  const scoreRef = firebase.database().ref(`rooms/${roomKey}/scores/${currentUid}`);
+  await scoreRef.transaction(cur => {
+    if (cur) {
+      cur.points = Math.max(0, cur.points - 1);
+      return cur;
+    }
+    return { name: currentPlayer, points: 0 };
+  });
+  alert("😈 Malus appliqué : tu perds 1 point !");
+  impostorResultSection.style.display = 'none';
+});
 
 /* ========= MISE À JOUR DES SCORES ========= */
 const updateScores = async (votes, realImpostor) => {
