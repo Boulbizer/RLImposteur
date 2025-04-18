@@ -212,27 +212,30 @@ const showRole = (impostor, challenges) => {
   setTimeout(() => startVoting(impostor), 3000);
 };
 
-/* ========= PHASE DE VOTE ========= */
-  const startVoting = (realImpostor) => {
-  // 🚨 Imposteur : on saute l'écran de vote et on affiche directement l'écran RL
+/* ========= PHASE DE VOTE & ÉCRAN IMPOSTEUR ========= */
+const startVoting = (realImpostor) => {
+  // 🚨 Imposteur : on saute le vote et on affiche l'écran RL
   if (currentPlayer === realImpostor && impostorResultSection) {
     voteSection.style.display = 'none';
-    impostorFeedback.textContent = "";                   // efface tout ancien feedback
-    impostorResultText.textContent = "Sois honnête... 😈"; // texte de base
+    // Réinitialisation de l'écran
+    impostorFeedback.textContent   = "";
+    impostorResultText.textContent = "Sois honnête... 😈";
+    // Réactivation des boutons
+    impostorLostBtn.disabled = false;
+    impostorWonBtn.disabled  = false;
     impostorResultSection.style.display = 'block';
-    // on écoute quand même la fin des votes en tâche de fond
+    // On écoute la fin des votes en tâche de fond  (pour tous)
     listenForVoteEnd(realImpostor);
     return;
   }
 
-  voteSection.style.display = "block";
+  // Sinon : écran de vote classique
+  voteSection.style.display = 'block';
   const voteList = document.getElementById("vote-list");
   voteList.innerHTML = "";
   voteStatus.textContent = "Clique sur un joueur pour voter.";
-  
-  let hasVoted = false; // Empêche plusieurs votes pour le même joueur
+  let hasVoted = false;
 
-  // Créer la liste des joueurs à voter (excluant le votant)
   players.forEach(name => {
     if (name === currentPlayer) return;
     const li = document.createElement("li");
@@ -240,57 +243,43 @@ const showRole = (impostor, challenges) => {
     li.addEventListener("click", () => {
       if (hasVoted) return;
       hasVoted = true;
-      
-      // Appliquer immédiatement les modifications visuelles
       li.classList.add("selected");
-      Array.from(voteList.children).forEach(child => {
-        if (child !== li) child.classList.add("disabled");
+      Array.from(voteList.children).forEach(c => {
+        if (c !== li) c.classList.add("disabled");
       });
-      voteStatus.textContent = "✅ Vote enregistré. En attente des autres joueurs...";
-      
-      // Récupérer l'utilisateur courant
-      const user = firebase.auth().currentUser;
-      if (!user) return;
-      // Lancer la mise à jour Firebase sans attendre la fin de l'opération
-      firebase.database().ref(`rooms/${roomKey}/votes/${user.uid}`).set(name)
-        .catch(error => console.error("Erreur lors du vote:", error));
+      voteStatus.textContent = "✅ Vote enregistré. En attente...";
+      firebase.database().ref(`rooms/${roomKey}/votes/${currentUid}`).set(name);
     });
     voteList.appendChild(li);
   });
 
-  // Écoute en temps réel des votes
-  const votesRef = firebase.database().ref(`rooms/${roomKey}/votes`);
-  votesRef.on("value", async snapshot => {
-    const votes = snapshot.val() || {};
-    const totalVotes = Object.keys(votes).length;
-    voteStatus.textContent = `🗳️ ${totalVotes}/${players.length} votes enregistrés`;
+  listenForVoteEnd(realImpostor);
+};
 
-    if (totalVotes >= players.length) {
-      votesRef.off();
+function listenForVoteEnd(realImpostor) {
+  const votesRef = firebase.database().ref(`rooms/${roomKey}/votes`);
+  votesRef.on("value", async snap => {
+    const votes = snap.val() || {};
+    if (Object.keys(votes).length < players.length) return;
+    votesRef.off();
+    
       // Calcul du vote majoritaire
       const tally = {};
-      Object.values(votes).forEach(name => {
-        tally[name] = (tally[name] || 0) + 1;
-      });
-      let mostVoted = "";
-      let maxVotes = 0;
-      for (const [name, count] of Object.entries(tally)) {
-        if (count > maxVotes) {
-          mostVoted = name;
-          maxVotes = count;
-        }
-      }
-      const gameSnap = await firebase.database().ref(`rooms/${roomKey}/game`).get();
-      const gameData = gameSnap.val();
-      const realImpostorFinal = gameData.impostor;
-      // Seul le leader déclenche la mise à jour globale des scores
-      const leaderSnap = await firebase.database().ref(`rooms/${roomKey}/hostUid`).once('value');
-      if (leaderSnap.val() === currentUid) {
-        await updateScores(votes, realImpostorFinal);
-      }
+    Object.values(votes).forEach(n => tally[n] = (tally[n]||0) + 1);
+    let most = "", max = 0;
+    for (const [n,c] of Object.entries(tally)) {
+      if (c > max) { most = n; max = c; }
+    }
+
+    const gameSnap = await firebase.database().ref(`rooms/${roomKey}/game`).get();
+    const real = gameSnap.val().impostor;
+    const host = (await firebase.database().ref(`rooms/${roomKey}/hostUid`).once('value')).val();
+    if (host === currentUid) await updateScores(votes, real);
+    
+
       voteResult.innerHTML = `
-        <p><strong>🕵️ L’imposteur désigné :</strong> ${mostVoted} (${maxVotes} votes)</p>
-        <p><strong>🎯 Le vrai imposteur était :</strong> ${realImpostorFinal}</p>
+        <p><strong>🕵️ L’imposteur désigné :</strong> ${most} (${max} votes)</p>
+        <p><strong>🎯 Le vrai imposteur était :</strong> ${real}</p>
       `;
 
        // === NOUVEAU : Affiche le conteneur RL uniquement pour l’imposteur ===
@@ -306,13 +295,19 @@ const showRole = (impostor, challenges) => {
 
 /* ========= GESTION RÉSULTAT IMPOSTEUR ROCKET LEAGUE ========= */
 if (impostorResultSection) {
-  // « J'ai perdu » : fermeture de l'écran, pas de malus
+  // "J'ai perdu" → on ferme, on enregistre vote nul et on désactive
   impostorLostBtn.addEventListener('click', () => {
+    firebase.database().ref(`rooms/${roomKey}/votes/${currentUid}`).set('abstain');
     impostorResultSection.style.display = 'none';
+    impostorLostBtn.disabled = true;
+    impostorWonBtn.disabled  = true;
   });
 
-  // « J'ai gagné » : malus −1 point en Firebase + feedback in‑game + refresh scoreboard
+  // "J'ai gagné" → malus, vote nul, feedback, disable, refresh scores
   impostorWonBtn.addEventListener('click', async () => {
+    // Enregistrer le vote nul
+    await firebase.database().ref(`rooms/${roomKey}/votes/${currentUid}`).set('abstain');
+    // Appliquer le malus
     const scoreRef = firebase.database().ref(`rooms/${roomKey}/scores/${currentUid}`);
     await scoreRef.transaction(cur => {
       if (cur) {
@@ -321,11 +316,13 @@ if (impostorResultSection) {
       }
       return { name: currentPlayer, points: 0 };
     });
-    // feedback in‑game
+    // Feedback in‑game
     impostorFeedback.textContent = "😈 Malus appliqué : -1 point";
-    // mise à jour immédiate du tableau de scores
+    // Désactivation
+    impostorWonBtn.disabled     = true;
+    impostorLostBtn.disabled    = true;
+    // Rafraîchir immédiatement le scoreboard
     updateScoreboard();
-    // puis on garde ce feedback à l'écran jusqu'à ce que le vote se termine
   });
 }
 
