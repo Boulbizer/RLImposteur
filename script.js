@@ -298,15 +298,16 @@ function listenForVoteEnd(realImpostor) {
 if (impostorResultSection) {
   // "J'ai perdu" → on ferme, on enregistre vote nul et on désactive
   impostorLostBtn.addEventListener('click', () => {
-    firebase.database().ref(`rooms/${roomKey}/votes/${currentUid}`).set('abstain');
-    impostorResultSection.style.display = 'none';
-    impostorLostBtn.disabled = true;
-    impostorWonBtn.disabled  = true;
-  });
-
+  await firebase.database().ref(`rooms/${roomKey}/game`).update({ rlImpostorWon: false });
+  await firebase.database().ref(`rooms/${roomKey}/votes/${currentUid}`).set('abstain');
+   impostorResultSection.style.display = 'none';
+   impostorLostBtn.disabled = true;
+   impostorWonBtn.disabled  = true;
+});
   // "J'ai gagné" → malus, vote nul, feedback, disable, refresh scores
   impostorWonBtn.addEventListener('click', async () => {
     // Enregistrer le vote nul
+    await firebase.database().ref(`rooms/${roomKey}/game`).update({ rlImpostorWon: true });
     await firebase.database().ref(`rooms/${roomKey}/votes/${currentUid}`).set('abstain');
     // Appliquer le malus
     const scoreRef = firebase.database().ref(`rooms/${roomKey}/scores/${currentUid}`);
@@ -328,22 +329,30 @@ if (impostorResultSection) {
 }
 
 /* ========= MISE À JOUR DES SCORES ========= */
-const updateScores = async (votes, realImpostor) => {
+async function updateScores(votes, realImpostor) {
+  const gameRef = firebase.database().ref(`rooms/${roomKey}/game`);
+  const gameSnap = await gameRef.once('value');
+  const gameData = gameSnap.val() || {};
+
+  // ① Ne traiter qu'une seule fois
+  if (gameData.scoresProcessed) return;
+
+  // ② Lire si l'imposteur a gagné en RL
+  const rlWon = gameData.rlImpostorWon === true;
+
   const scoresRef = firebase.database().ref(`rooms/${roomKey}/scores`);
-  // Récupérer la liste complète des joueurs
   const playersSnap = await firebase.database().ref(`rooms/${roomKey}/players`).once('value');
   const playersMapping = playersSnap.val() || {};
-  // Transaction unique sur le nœud "scores"
-  await scoresRef.transaction((currentScores) => {
-    if (currentScores === null) {
-      currentScores = {};
-    }
-    // Pour chaque vote, ajouter 1 point si le vote est correct
+
+  await scoresRef.transaction(currentScores => {
+    currentScores = currentScores || {};
+
+    // 1) points pour chaque vote correct
     for (const uid in votes) {
       const voteName = votes[uid];
       if (!currentScores[uid]) {
         currentScores[uid] = {
-          name: playersMapping[uid] ? playersMapping[uid].name : "Inconnu",
+          name: playersMapping[uid]?.name || "Inconnu",
           points: 0
         };
       }
@@ -351,34 +360,40 @@ const updateScores = async (votes, realImpostor) => {
         currentScores[uid].points += 1;
       }
     }
-    // Appliquer le bonus pour l’imposteur : +1 point pour chaque vote erroné (hors vote de l'imposteur)
-    let impostorUid = null;
-    for (const uid in playersMapping) {
-      if (playersMapping[uid].name === realImpostor) {
-        impostorUid = uid;
-        break;
-      }
-    }
+
+        // 2) imposteur bonus ou malus
+    // Trouver l'UID de l'imposteur
+ const impostorUid = Object.keys(playersMapping)
+      .find(u => playersMapping[u].name === realImpostor);
+
     if (impostorUid) {
-      let bonusPoints = 0;
-      for (const [voterUid, votedName] of Object.entries(votes)) {
-        if (votedName !== realImpostor && voterUid !== impostorUid) {
-          bonusPoints++;
-        }
-      }
+      // Initialiser si absent
       if (!currentScores[impostorUid]) {
-        currentScores[impostorUid] = {
-          name: playersMapping[impostorUid] ? playersMapping[impostorUid].name : realImpostor,
-          points: 0
-        };
+        currentScores[impostorUid] = { name: realImpostor, points: 0 };
       }
-      currentScores[impostorUid].points += bonusPoints;
+
+      if (rlWon) {
+        // Malus : -1 point
+        currentScores[impostorUid].points =
+          Math.max(0, currentScores[impostorUid].points - 1);
+      } else {
+        // Bonus normal : +1 par vote erroné (hors imposteur)
+        let bonus = 0;
+        for (const [voterUid, votedName] of Object.entries(votes)) {
+          if (votedName !== realImpostor && voterUid !== impostorUid) {
+            bonus++;
+          }
+        }
+        currentScores[impostorUid].points += bonus;
+      }
     }
+
     return currentScores;
   });
-  // Marquer la manche comme traitée pour éviter un recalcul lors d'un rafraîchissement
-  await firebase.database().ref(`rooms/${roomKey}/game`).update({ scoresProcessed: true });
-};
+
+  // 3) marquer comme traité
+  await gameRef.update({ scoresProcessed: true });
+}
 
 /* ========= MISE À JOUR DU TABLEAU DES SCORES ========= */
 const updateScoreboard = async () => {
