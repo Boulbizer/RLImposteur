@@ -202,3 +202,9 @@ button:hover {
 #impostor-result-section button:hover {
   background-color: #e53935;
 }
+
+/* Boutons RL désactivés = opacité réduite + curseur interdit */
+#impostor-result-section button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
