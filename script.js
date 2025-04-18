@@ -262,9 +262,9 @@ function listenForVoteEnd(realImpostor) {
     const votes = snap.val() || {};
     if (Object.keys(votes).length < players.length) return;
     votesRef.off();
-    
-      // Calcul du vote majoritaire
-      const tally = {};
+
+    // ➡️ Calcul majoritaire
+    const tally = {};
     Object.values(votes).forEach(n => tally[n] = (tally[n]||0) + 1);
     let most = "", max = 0;
     for (const [n,c] of Object.entries(tally)) {
@@ -275,25 +275,26 @@ function listenForVoteEnd(realImpostor) {
     const real = gameSnap.val().impostor;
     const host = (await firebase.database().ref(`rooms/${roomKey}/hostUid`).once('value')).val();
     if (host === currentUid) await updateScores(votes, real);
-    
 
-      voteResult.innerHTML = `
-        <p><strong>🕵️ L’imposteur désigné :</strong> ${most} (${max} votes)</p>
-        <p><strong>🎯 Le vrai imposteur était :</strong> ${real}</p>
-      `;
+    // ➡️ Affichage du résultat du vote pour tous
+    voteResult.innerHTML = `
+      <p><strong>🕵️ Désigné :</strong> ${most} (${max} votes)</p>
+      <p><strong>🎯 Réel :</strong> ${real}</p>
+    `;
 
-       // === NOUVEAU : Affiche le conteneur RL uniquement pour l’imposteur ===
-    if (currentPlayer === realImpostorFinal && impostorResultSection) {
-  impostorResultSection.style.display = 'block';
+    // ➡️ Cacher l'écran RL s'il était ouvert
+    if (impostorResultSection) impostorResultSection.style.display = 'none';
+
+    // ➡️ Afficher scores & replay (uniquement bouton leader)
+    updateScoreboard();
+    showReplayOption();
+
+    // ➡️ Afficher la section de vote en lecture seule
+    voteSection.style.display = 'block';
+  });
 }
 
-      
-      showReplayOption();
-    }
-  });
-};
-
-/* ========= GESTION RÉSULTAT IMPOSTEUR ROCKET LEAGUE ========= */
+/* ========= GESTION RÉSULTAT ROCKET LEAGUE ========= */
 if (impostorResultSection) {
   // "J'ai perdu" → on ferme, on enregistre vote nul et on désactive
   impostorLostBtn.addEventListener('click', () => {
@@ -317,7 +318,7 @@ if (impostorResultSection) {
       return { name: currentPlayer, points: 0 };
     });
     // Feedback in‑game
-    impostorFeedback.textContent = "😈 Malus appliqué : -1 point";
+    impostorFeedback.textContent = "😈 Malus appliqué : -1 point";
     // Désactivation
     impostorWonBtn.disabled     = true;
     impostorLostBtn.disabled    = true;
