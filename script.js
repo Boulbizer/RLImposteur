@@ -175,6 +175,8 @@ if (startBtn) {
   startBtn.addEventListener('click', () => {
     if (players.length < MIN_PLAYERS_TO_START) return;
     const impostor  = players[Math.floor(Math.random() * players.length)];
+    console.log('random');
+    console.log(impostor);
     const challenges = getRandomChallenges();
     gameRef.set({ impostor, challenges, started: true, scoresProcessed: false });
     votesRef.remove();
