@@ -48,24 +48,20 @@ const IMPOSTOR_CHALLENGES = [
 ];
 
 /* ========= FONCTIONS UTILITAIRES ========= */
-// Récupère la room key depuis les paramètres d'URL (plusieurs clés supportées)
 function getRoomKey() {
   const params = new URLSearchParams(window.location.search);
   return params.get('salle') || params.get('room') || params.get('roomId');
 }
 
-// Récupère X défis aléatoires
 const getRandomChallenges = (count = 3) =>
   [...IMPOSTOR_CHALLENGES].sort(() => 0.5 - Math.random()).slice(0, count);
 
-// Affiche un message de feedback temporaire
 const showFeedback = (element, message, duration = 2000) => {
   if (!element) return;
   element.textContent = message;
   setTimeout(() => { element.textContent = ""; }, duration);
 };
 
-// Vérifie si l'utilisateur courant est le leader
 async function isLeader() {
   if (!currentUid || !roomKey) return false;
   const snap = await firebase.database().ref(`rooms/${roomKey}/hostUid`).once('value');
@@ -103,30 +99,26 @@ if (copyBtn) {
   });
 }
 
-/* ========= GESTION DE LA CRÉATION DE SALLE ========= */
+/* ========= CRÉATION DE SALLE ========= */
 if (createRoomBtn) {
   createRoomBtn.addEventListener('click', async () => {
     const randomRoom = `rocket-${Math.random().toString(36).substring(2, 7)}`;
     const user       = firebase.auth().currentUser;
-    if (user) {
-      await firebase.database().ref(`rooms/${randomRoom}/hostUid`).set(user.uid);
-    }
+    if (user) await firebase.database().ref(`rooms/${randomRoom}/hostUid`).set(user.uid);
     window.location.href = `?salle=${randomRoom}`;
   });
 }
 
-/* ========= ÉCOUTE EN TEMPS RÉEL DES JOUEURS ========= */
+/* ========= ÉCOUTE & MISE À JOUR DES JOUEURS ========= */
 function listenToPlayers() {
   if (!playersRef) return;
   playersRef.off();
-  playersRef.on('value', snapshot => {
-    const data    = snapshot.val() || {};
-    players       = Object.values(data).map(p => p.name);
+  playersRef.on('value', snap => {
+    players = Object.values(snap.val() || {}).map(p => p.name);
     updatePlayerListUI(players);
   });
 }
 
-/* ========= MISE À JOUR DE LA LISTE DES JOUEURS ========= */
 async function updatePlayerListUI(players) {
   if (!playerList) return;
   playerList.innerHTML = '';
@@ -136,28 +128,24 @@ async function updatePlayerListUI(players) {
     playerList.appendChild(li);
   });
   const hostSnap = await firebase.database().ref(`rooms/${roomKey}/hostUid`).once('value');
-  const hostUid  = hostSnap.val();
-  startBtn.style.display = (currentUid === hostUid && players.length >= MIN_PLAYERS_TO_START)
-    ? 'inline-block'
-    : 'none';
+  startBtn.style.display = (currentUid === hostSnap.val() && players.length >= MIN_PLAYERS_TO_START)
+    ? 'inline-block' : 'none';
 }
 
-/* ========= INSCRIPTION DES JOUEURS ========= */
+/* ========= INSCRIPTION ========= */
 if (joinBtn) {
   joinBtn.addEventListener('click', async () => {
     const name = usernameInput.value.trim();
     pseudoError.textContent = '';
     if (!name) return;
     const snapshot = await playersRef.once('value');
-    const existing = snapshot.val() || {};
-    if (Object.values(existing).some(p => p.name === name)) {
+    if (Object.values(snapshot.val() || {}).some(p => p.name === name)) {
       pseudoError.textContent = "Ce pseudo est déjà utilisé dans cette salle 🚫";
       return;
     }
     const user = firebase.auth().currentUser;
     if (!user) return;
-    currentPlayer = name;
-    currentUid    = user.uid;
+    currentPlayer = name; currentUid = user.uid;
     await playersRef.child(currentUid).set({ name });
     playersRef.child(currentUid).onDisconnect().remove();
     votesRef.child(currentUid).onDisconnect().remove();
@@ -174,7 +162,7 @@ if (joinBtn) {
 if (startBtn) {
   startBtn.addEventListener('click', () => {
     if (players.length < MIN_PLAYERS_TO_START) return;
-    const impostor  = players[Math.floor(Math.random() * players.length)];
+    const impostor   = players[Math.floor(Math.random() * players.length)];
     console.log('random');
     console.log(impostor);
     const challenges = getRandomChallenges();
@@ -185,281 +173,162 @@ if (startBtn) {
 
 /* ========= AFFICHAGE DU RÔLE ========= */
 function showRole(impostor, challenges) {
-  joinSection.style.display = 'none';
+  joinSection.style.display  = 'none';
   lobbySection.style.display = 'none';
   const pseudoLabel = document.getElementById('pseudo-label');
   if (pseudoLabel) pseudoLabel.style.display = 'none';
   roleSection.style.display = 'block';
-  roleDisplay.innerHTML  = '';
-
-  const badge = document.createElement('div');
-  badge.id = 'role-badge';
-
+  roleDisplay.innerHTML     = '';
+  const badge = document.createElement('div'); badge.id = 'role-badge';
   if (currentPlayer === impostor) {
-    badge.classList.add('impostor');
-    badge.textContent = '🚨 IMPOSTEUR';
+    badge.classList.add('impostor'); badge.textContent = '🚨 IMPOSTEUR';
     roleDisplay.appendChild(badge);
-    roleDisplay.innerHTML += `<div style="margin-top:10px; text-align:left;">
-      <strong>🎯 Tes défis :</strong><br>${challenges.map(c => `• ${c}`).join('<br>')}
-    </div>`;
+    roleDisplay.innerHTML += `<div style="margin-top:10px;text-align:left;"><strong>🎯 Tes défis :</strong><br>${challenges.map(c=>`• ${c}`).join('<br>')}</div>`;
   } else {
-    badge.classList.add('citizen');
-    badge.textContent = '🟢 COÉQUIPIER';
+    badge.classList.add('citizen'); badge.textContent = '🟢 COÉQUIPIER';
     roleDisplay.appendChild(badge);
     roleDisplay.innerHTML += '<p>Gagne la partie et démasque l’imposteur.</p>';
   }
-  // Animation
-  roleDisplay.classList.remove('show', 'animate');
-  void roleDisplay.offsetWidth;
-  roleDisplay.classList.add('show', 'animate');
-
-  setTimeout(() => startVoting(impostor), 3000);
+  roleDisplay.classList.remove('show','animate'); void roleDisplay.offsetWidth;
+  roleDisplay.classList.add('show','animate');
+  setTimeout(()=>startVoting(impostor),3000);
 }
 
-/* ========= PHASE DE VOTE & ÉCRAN IMPOSTEUR ========= */
+/* ========= VOTE & ÉCRAN IMPOSTEUR ========= */
 function startVoting(realImpostor) {
-  if (currentPlayer === realImpostor && impostorResultSection) {
-    voteSection.style.display = 'none';
-    impostorFeedback.textContent   = '';
-    impostorResultText.textContent = 'Sois honnête... 😈';
-    impostorLostBtn.disabled = false;
-    impostorWonBtn.disabled  = false;
-    impostorResultSection.style.display = 'block';
-    listenForVoteEnd(realImpostor);
-    return;
+  if (currentPlayer===realImpostor && impostorResultSection) {
+    voteSection.style.display='none';
+    impostorFeedback.textContent='';
+    impostorResultText.textContent='Sois honnête... 😈';
+    impostorLostBtn.disabled=false; impostorWonBtn.disabled=false;
+    impostorLostBtn.classList.remove('confirmed'); impostorWonBtn.classList.remove('confirmed');
+    impostorResultSection.style.display='block';
+    listenForVoteEnd(realImpostor); return;
   }
-
-  voteSection.style.display = 'block';
-  voteList.innerHTML = '';
-  voteStatus.textContent = 'Clique sur un joueur pour voter.';
-  let hasVoted = false;
-  voteSection.style.pointerEvents = 'auto';
-
-  players.forEach(name => {
-    if (name === currentPlayer) return;
-    const li = document.createElement('li');
-    li.textContent = name;
-    li.addEventListener('click', () => {
-      if (hasVoted) return;
-      hasVoted = true;
-      li.classList.add('selected');
-      voteSection.style.pointerEvents = 'none';
-      voteStatus.textContent = '✅ Vote enregistré. En attente...';
-      votesRef.child(currentUid).set(name);
-    });
-    voteList.appendChild(li);
+  voteSection.style.display='block'; voteList.innerHTML=''; voteStatus.textContent='Clique sur un joueur pour voter.';
+  let hasVoted=false; voteSection.style.pointerEvents='auto';
+  players.forEach(name=>{
+    if(name===currentPlayer)return;
+    const li=document.createElement('li'); li.textContent=name;
+    li.addEventListener('click',()=>{
+      if(hasVoted)return; hasVoted=true;
+      li.classList.add('selected'); voteSection.style.pointerEvents='none';
+      voteStatus.textContent='✅ Vote enregistré. En attente...'; votesRef.child(currentUid).set(name);
+    }); voteList.appendChild(li);
   });
   listenForVoteEnd(realImpostor);
 }
 
-async function listenForVoteEnd(realImpostor) {
-  votesRef.off();
-  votesRef.on('value', async snap => {
-    const votes = snap.val() || {};
-    const playersSnap = await playersRef.once('value');
-    const playerCount = playersSnap.numChildren();
-    if (Object.keys(votes).length < playerCount) return;
-    votesRef.off();
-
-    // ➡️ Calcul majoritaire (exclut 'abstain')
-    const validVotes = Object.values(votes).filter(n => n !== 'abstain');
-    const tally = {};
-    validVotes.forEach(n => tally[n] = (tally[n]||0) + 1);
-    let most = '', max = 0;
-    Object.entries(tally).forEach(([n,c]) => {
-      if (c > max) { most = n; max = c; }
-    });
-
-    const gameSnap = await gameRef.once('value');
-    const real       = gameSnap.val().impostor;
-    const hostSnap   = await firebase.database().ref(`rooms/${roomKey}/hostUid`).once('value');
-    const host       = hostSnap.val();
-    if (host === currentUid) await updateScores(votes, real);
-
-    voteResult.innerHTML = `
-      <p><strong>🕵️ Désigné :</strong> ${most} (${max} votes)</p>
-      <p><strong>🎯 Réel :</strong> ${real}</p>
-    `;
-
-    if (impostorResultSection) impostorResultSection.style.display = 'none';
-    updateScoreboard();
-    showReplayOption();
-    voteSection.style.display = 'block';
+async function listenForVoteEnd(realImpostor){
+  votesRef.off(); votesRef.on('value',async snap=>{
+    const votes=snap.val()||{};
+    const count=(await playersRef.once('value')).numChildren();
+    if(Object.keys(votes).length<count)return; votesRef.off();
+    const validVotes=Object.values(votes).filter(n=>n!=='abstain');
+    const tally={}; validVotes.forEach(n=>tally[n]=(tally[n]||0)+1);
+    let most='',max=0;Object.entries(tally).forEach(([n,c])=>{if(c>max){most=n;max=c;}});
+    const gameSnap=await gameRef.once('value'),real=gameSnap.val().impostor;
+    const host=(await firebase.database().ref(`rooms/${roomKey}/hostUid`).once('value')).val();
+    if(host===currentUid)await updateScores(votes,real);
+    voteResult.innerHTML=`<p><strong>🕵️ Désigné :</strong> ${most} (${max} votes)</p><p><strong>🎯 Réel :</strong> ${real}</p>`;
+    if(impostorResultSection)impostorResultSection.style.display='none';
+    updateScoreboard(); showReplayOption(); voteSection.style.display='block';
   });
 }
 
-/* ========= GESTION RÉSULTAT ROCKET LEAGUE ========= */
-if (impostorLostBtn) {
-  impostorLostBtn.addEventListener('click', async () => {
-    await gameRef.update({ rlImpostorWon: false });
-    await votesRef.child(currentUid).set('abstain');
-    impostorResultSection.style.display = 'none';
-    impostorLostBtn.disabled = true;
-    impostorWonBtn.disabled  = true;
+/* ========= GESTION RÉSULTAT RL ========= */
+if(impostorLostBtn){
+  impostorLostBtn.addEventListener('click',async()=>{
+    await gameRef.update({rlImpostorWon:false}); await votesRef.child(currentUid).set('abstain');
+    impostorResultSection.style.display='none'; impostorLostBtn.disabled=true; impostorWonBtn.disabled=true;
     impostorLostBtn.classList.add('confirmed');
   });
 }
-if (impostorWonBtn) {
-  impostorWonBtn.addEventListener('click', async () => {
-    await gameRef.update({ rlImpostorWon: true });
-    await votesRef.child(currentUid).set('abstain');
-
-    const scoreRef = scoresRef.child(currentUid);
-    await scoreRef.transaction(cur => {
-      if (cur) cur.points = Math.max(0, cur.points - 1);
-      else return { name: currentPlayer, points: 0 };
-      return cur;
-    });
-
-    impostorFeedback.textContent = "😈 Malus appliqué : -1 point";
-    impostorWonBtn.disabled      = true;
-    impostorLostBtn.disabled     = true;
-    impostorWonBtn.classList.add('confirmed');
-
-    updateScoreboard();
+if(impostorWonBtn){
+  impostorWonBtn.addEventListener('click',async()=>{
+    await gameRef.update({rlImpostorWon:true}); await votesRef.child(currentUid).set('abstain');
+    await scoresRef.child(currentUid).transaction(cur=>{if(cur)cur.points=Math.max(0,cur.points-1);else return{ name:currentPlayer,points:0 };return cur;});
+    impostorFeedback.textContent="😈 Malus appliqué : -1 point"; impostorWonBtn.disabled=true; impostorLostBtn.disabled=true;
+    impostorWonBtn.classList.add('confirmed'); updateScoreboard();
   });
 }
 
-/* ========= MISE À JOUR DES SCORES ========= */
-async function updateScores(votes, realImpostor) {
-  const gameSnap   = await gameRef.once('value');
-  const gameData   = gameSnap.val() || {};
-  if (gameData.scoresProcessed) return;
-
-  const rlWon = gameData.rlImpostorWon === true;
-  const playersSnap = await playersRef.once('value');
-  const playersMap  = playersSnap.val() || {};
-
-  await scoresRef.transaction(currentScores => {
-    currentScores = currentScores || {};
-
-    // 1) votes corrects
-    Object.entries(votes).forEach(([uid, voteName]) => {
-      if (!currentScores[uid]) currentScores[uid] = { name: playersMap[uid]?.name || 'Inconnu', points: 0 };
-      if (voteName === realImpostor) currentScores[uid].points++;
-    });
-
-    // 2) imposteur bonus/malus (exclut 'abstain')
-    const impostorUid = Object.keys(playersMap)
-      .find(u => playersMap[u].name === realImpostor);
-    if (impostorUid) {
-      if (!currentScores[impostorUid]) currentScores[impostorUid] = { name: realImpostor, points: 0 };
-      if (rlWon) {
-        currentScores[impostorUid].points = Math.max(0, currentScores[impostorUid].points - 1);
-      } else {
-        let bonus = 0;
-        Object.entries(votes).forEach(([voterUid, votedName]) => {
-          if (votedName !== realImpostor && votedName !== 'abstain' && voterUid !== impostorUid) bonus++;
-        });
-        currentScores[impostorUid].points += bonus;
-      }
+/* ========= UPDATE SCORES ========= */
+async function updateScores(votes,realImpostor){
+  const data=(await gameRef.once('value')).val()||{};
+  if(data.scoresProcessed)return;
+  const rlWon=data.rlImpostorWon===true;
+  const playersMap=(await playersRef.once('value')).val()||{};
+  await scoresRef.transaction(curr=>{
+    curr=curr||{};
+    Object.entries(votes).forEach(([uid,name])=>{if(!curr[uid])curr[uid]={name:playersMap[uid]?.name||'Inconnu',points:0};if(name===realImpostor)curr[uid].points++;});
+    const impUid=Object.keys(playersMap).find(u=>playersMap[u].name===realImpostor);
+    if(impUid){if(!curr[impUid])curr[impUid]={name:realImpostor,points:0};
+      if(rlWon)curr[impUid].points=Math.max(0,curr[impUid].points-1);
+      else{let bonus=0;Object.entries(votes).forEach(([uid,v])=>{if(v!==realImpostor&&v!=='abstain'&&uid!==impUid)bonus++;});curr[impUid].points+=bonus;}
     }
-
-    return currentScores;
+    return curr;
   });
-
-  await gameRef.update({ scoresProcessed: true });
+  await gameRef.update({scoresProcessed:true});
 }
 
-/* ========= MISE À JOUR DU TABLEAU DES SCORES ========= */
-async function updateScoreboard() {
-  const scoresSnap  = await scoresRef.once('value');
-  const scoresData  = scoresSnap.val() || {};
-  if (Object.keys(scoresData).length === 0) {
-    scoreSection.style.display = 'none';
-    return;
-  }
-  const playersSnap = await playersRef.once('value');
-  const playersMap  = playersSnap.val() || {};
-
-  const scoreArray = Object.entries(playersMap).map(([uid, data]) => ({
-    name:   data.name,
-    points: (scoresData[uid]?.points) || 0
-  })).sort((a, b) => b.points - a.points);
-
-  scoreBoard.innerHTML = '';
-  scoreArray.forEach(s => {
-    const li = document.createElement('li');
-    li.textContent = `${s.name}: ${s.points} pts`;
-    scoreBoard.appendChild(li);
-  });
-  scoreSection.style.display = 'block';
+/* ========= UPDATE SCOREBOARD ========= */
+async function updateScoreboard(){
+  const scoresData=(await scoresRef.once('value')).val()||{};
+  if(!Object.keys(scoresData).length){scoreSection.style.display='none';return;}
+  const playersMap=(await playersRef.once('value')).val()||{};
+  const arr=Object.entries(playersMap).map(([uid,d])=>({name:d.name,points:scoresData[uid]?.points||0})).sort((a,b)=>b.points-a.points);
+  scoreBoard.innerHTML='';arr.forEach(s=>{const li=document.createElement('li');li.textContent=`${s.name}: ${s.points} pts`;scoreBoard.appendChild(li);});
+  scoreSection.style.display='block';
 }
 
-/* ========= ÉCOUTE EN TEMPS RÉEL DES SCORES ========= */
-scoresRef.off();
-scoresRef.on('value', () => updateScoreboard());
+/* ========= OPTION REPLAY ========= */
+function showReplayOption(){
+  if(!replaySection) return;
+  (async()=>{
+    const host=(await firebase.database().ref(`rooms/${roomKey}/hostUid`).once('value')).val();
+    const isLeader = host===currentUid;
+    replaySection.style.display='block';
+    replayBtn.style.display = isLeader?'inline-block':'none';
+    replayInfo.textContent  = isLeader?"Tu es l'organisateur. Tu peux relancer une partie.":"En attente que l'organisateur relance la partie.";
+  })();
+}
 
-/* ========= ÉCOUTE DES MODIFICATIONS DE L'ÉTAT DU JEU ========= */
-function listenToGame() {
-  if (!gameRef) return;
-  gameRef.off();
-  gameRef.on('value', snapshot => {
-    const game = snapshot.val();
-    if (game?.started) {
-      showRole(game.impostor, game.challenges);
-    } else {
-      roleSection.style.display   = 'none';
-      voteSection.style.display   = 'none';
-      replaySection.style.display = 'none';
-      roleDisplay.innerHTML       = '';
-      roleDisplay.className       = roleDisplay.className.replace(/impostor|citizen|show|animate/g, '');
-      voteResult.innerHTML        = '';
-      lobbySection.style.display  = 'block';
+/* ========= REPLAY HANDLER ========= */
+if(replayBtn){
+  replayBtn.addEventListener('click',async()=>{
+    [playersRef,gameRef,votesRef,scoresRef].forEach(ref=>ref.off());
+    players=[];scoreBoard.innerHTML='';
+    await gameRef.remove();await votesRef.remove();
+    roleSection.style.display='none';voteSection.style.display='none';voteResult.innerHTML='';
+    joinSection.style.display='none';lobbySection.style.display='block';
+    const snap=await scoresRef.once('value'); if(snap.exists())updateScoreboard();
+    listenToPlayers();listenToGame();
+  });
+}
+
+/* ========= REACTIVITY FIREBASE ========= */
+scoresRef.off();scoresRef.on('value',()=>updateScoreboard());
+
+function listenToGame(){
+  if(!gameRef)return;
+  gameRef.off();gameRef.on('value',snap=>{
+    const g=snap.val();
+    if(g?.started)showRole(g.impostor,g.challenges);
+    else{
+      roleSection.style.display='none';voteSection.style.display='none';replaySection.style.display='none';
+      roleDisplay.innerHTML='';roleDisplay.className=roleDisplay.className.replace(/impostor|citizen|show|animate/g,'');
+      voteResult.innerHTML='';lobbySection.style.display='block';
     }
   });
 }
 
-/* ========= OPTION REJOUER ========= */
-if (replayBtn) {
-  replayBtn.addEventListener('click', async () => {
-    // Detach all listeners
-    playersRef.off(); gameRef.off(); votesRef.off(); scoresRef.off();
-    // Reset in-memory
-    players       = [];
-    scoreBoard.innerHTML = '';
-    // Remove DB nodes
-    await gameRef.remove();
-    await votesRef.remove();
-    // UI reset
-    roleSection.style.display = 'none';
-    voteSection.style.display = 'none';
-    voteResult.innerHTML      = '';
-    joinSection.style.display = 'none';
-    lobbySection.style.display= 'block';
-    // Refresh scoreboard if scores persist
-    const snap = await scoresRef.once('value');
-    if (snap.exists()) updateScoreboard();
-    // Re-attach listeners
-    listenToPlayers();
-    listenToGame();
-  });
-}
-
-/* ========= INITIALISATION DE LA SESSION ========= */
-firebase.auth().onAuthStateChanged(user => {
-  if (!user) return;
-  currentUid = user.uid;
-  if (!roomKey) return;
-
-  const savedName = localStorage.getItem('rl_pseudo');
-  const savedRoom = localStorage.getItem('rl_room');
-  if (savedName && savedRoom === roomKey) {
-    currentPlayer = savedName;
-    firebase.database().ref(`rooms/${roomKey}/players/${user.uid}`).set({ name: currentPlayer });
-    joinSection.style.display  = 'none';
-    lobbySection.style.display = 'block';
-  } else {
-    playersRef.child(user.uid).once('value').then(snap => {
-      if (snap.exists()) {
-        currentPlayer = snap.val().name;
-        const pseudoLabel = document.getElementById('pseudo-label');
-        if (pseudoLabel) pseudoLabel.textContent = `👤 ${currentPlayer}`;
-        joinSection.style.display  = 'none';
-        lobbySection.style.display = 'block';
-      }
-    });
-  }
-  listenToPlayers();
-  listenToGame();
+/* ========= AUTH & INIT ========= */
+firebase.auth().onAuthStateChanged(user=>{
+  if(!user) return; currentUid=user.uid;
+  if(!roomKey) return;
+  const sn = localStorage.getItem('rl_pseudo'), sr = localStorage.getItem('rl_room');
+  if(sn && sr===roomKey){currentPlayer=sn;firebase.database().ref(`rooms/${roomKey}/players/${user.uid}`).set({name:currentPlayer});joinSection.style.display='none';lobbySection.style.display='block';}
+  else playersRef.child(user.uid).once('value').then(snap=>{if(snap.exists()){currentPlayer=snap.val().name;const lbl=document.getElementById('pseudo-label');if(lbl)lbl.textContent=`👤 ${currentPlayer}`;joinSection.style.display='none';lobbySection.style.display='block';}});
+  listenToPlayers();listenToGame();
 });
