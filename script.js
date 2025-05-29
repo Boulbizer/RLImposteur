@@ -196,6 +196,7 @@ function showRole(impostor, challenges) {
 
 /* ========= VOTE & ÉCRAN IMPOSTEUR ========= */
 function startVoting(realImpostor) {
+  console.log('Start startVoting...')
   if (currentPlayer===realImpostor && impostorResultSection) {
     //voteSection.style.display='none';
     impostorFeedback.textContent='';
