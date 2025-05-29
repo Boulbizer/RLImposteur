@@ -197,7 +197,7 @@ function showRole(impostor, challenges) {
 /* ========= VOTE & ÉCRAN IMPOSTEUR ========= */
 function startVoting(realImpostor) {
   if (currentPlayer===realImpostor && impostorResultSection) {
-    voteSection.style.display='none';
+    //voteSection.style.display='none';
     impostorFeedback.textContent='';
     impostorResultText.textContent='Sois honnête... 😈';
     impostorLostBtn.disabled=false; impostorWonBtn.disabled=false;
@@ -231,8 +231,13 @@ async function listenForVoteEnd(realImpostor){
     const host=(await firebase.database().ref(`rooms/${roomKey}/hostUid`).once('value')).val();
     if(host===currentUid)await updateScores(votes,real);
     voteResult.innerHTML=`<p><strong>🕵️ Désigné :</strong> ${most} (${max} votes)</p><p><strong>🎯 Réel :</strong> ${real}</p>`;
-    if(impostorResultSection)impostorResultSection.style.display='none';
-    updateScoreboard(); showReplayOption(); voteSection.style.display='block';
+    if(impostorResultSection) {
+      impostorResultSection.style.display='none';
+    }
+
+    updateScoreboard(); 
+    showReplayOption(); 
+    voteSection.style.display='block';
   });
 }
 
