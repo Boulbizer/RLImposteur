@@ -222,20 +222,29 @@ function startVoting(realImpostor) {
 async function listenForVoteEnd(realImpostor){
   votesRef.off(); votesRef.on('value',async snap=>{
     const votes=snap.val()||{};
-    const count=(await playersRef.once('value')).numChildren();
-    if(Object.keys(votes).length<count)return; votesRef.off();
-    const validVotes=Object.values(votes).filter(n=>n!=='abstain');
+    // Correction : ne compter que les joueurs encore présents
+    const playersSnap = await playersRef.once('value');
+    const playersMap = playersSnap.val() || {};
+    const presentUids = Object.keys(playersMap);
+    if(Object.keys(votes).length < presentUids.length) return;
+    votesRef.off();
+    const validVotes=Object.entries(votes).filter(([uid,n])=>n!=='abstain' && presentUids.includes(uid)).map(([uid,n])=>n);
     const tally={}; validVotes.forEach(n=>tally[n]=(tally[n]||0)+1);
-    let most='',max=0;Object.entries(tally).forEach(([n,c])=>{if(c>max){most=n;max=c;}});
+    // Correction : gérer les égalités
+    let max=0, mosts=[];
+    Object.entries(tally).forEach(([n,c])=>{if(c>max){max=c;mosts=[n];}else if(c===max){mosts.push(n);}});
     const gameSnap=await gameRef.once('value'),real=gameSnap.val().impostor;
     const host=(await firebase.database().ref(`rooms/${roomKey}/hostUid`).once('value')).val();
     if(host===currentUid)await updateScores(votes,real);
-    voteResult.innerHTML=`<p><strong>🕵️ Désigné :</strong> ${most} (${max} votes)</p><p><strong>🎯 Réel :</strong> ${real}</p>`;
+    let resultHtml = mosts.length > 1
+      ? `<p><strong>🕵️ Désignés ex-aequo :</strong> ${mosts.join(', ')} (${max} votes)</p>`
+      : `<p><strong>🕵️ Désigné :</strong> ${mosts[0]} (${max} votes)</p>`;
+    resultHtml += `<p><strong>🎯 Réel :</strong> ${real}</p>`;
+    voteResult.innerHTML = resultHtml;
     if(impostorResultSection) {
       impostorResultSection.style.display='none';
     }
-
-    updateScoreboard(); 
+    updateScoreboard();
     showReplayOption(); 
     voteSection.style.display='block';
   });
