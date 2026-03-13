@@ -1,0 +1,8 @@
+# Exclude Firebase config
+firebase/credentials.json
+
+# Common files
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
